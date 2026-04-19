@@ -1,0 +1,128 @@
+:root {
+  --pink: #ff8ecf;
+  --red: #ff3d5d;
+  --yellow: #ffe066;
+  --blue: #6ec1ff;
+  --white: #ffffff;
+  --text: #3a122a;
+  --surface: rgba(255, 255, 255, 0.92);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top left, rgba(255, 142, 207, 0.45), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 30%),
+    linear-gradient(135deg, #fff8f0 0%, #ffe9f7 50%, #fff9d8 100%);
+  color: var(--text);
+}
+
+.main {
+  background: radial-gradient(circle at top left, rgba(255, 142, 207, 0.45), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 30%),
+    linear-gradient(135deg, #fff8f0 0%, #ffe9f7 50%, #fff9d8 100%);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.site-name {
+  font-size: clamp(2.4rem, 4vw, 3.75rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.04em;
+  color: #3c0f2f;
+}
+
+.navi-buttons {
+    display: flex; 
+    gap: 1rem; 
+}
+
+.navi-buttons a.button {
+    padding: 0.5rem 1rem; 
+    border-radius: 999px; 
+    text-decoration: none; 
+    background: linear-gradient(135deg, var(--pink), var(--red)); 
+    color: var(--white); 
+    transition: background 200ms ease;
+}
+
+.navi-buttons a.button:hover {
+    background: linear-gradient(135deg, var(--red), var(--pink)); 
+}
+
+#m-t,
+[m-text] {
+  width: min(720px, 100%);
+  padding: 2.5rem;
+  border-radius: 32px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgba(107, 38, 84, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(14px);
+}
+
+h1 {
+  font-size: clamp(2.4rem, 4vw, 3.75rem);
+  line-height: 1.05;
+  margin: 0 0 1rem;
+  letter-spacing: -0.04em;
+  color: #3c0f2f;
+}
+
+p {
+  font-size: 1.08rem;
+  line-height: 1.8;
+  margin: 0 0 1.75rem;
+  color: #5b2f52;
+}
+
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.75rem;
+  border: none;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+a.button:hover {
+  transform: translateY(-2px);
+  opacity: 0.97;
+}
+
+footer {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: #70385f;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  #m-t,
+  [m-text] {
+    padding: 1.75rem;
+  }
+}
