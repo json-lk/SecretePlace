@@ -1,0 +1,180 @@
+* {
+    box-sizing: border-box;
+}
+
+body{
+    margin:0;
+    font-family: Inter, Arial, sans-serif;
+    line-height: 1.6;
+    background-color:#f7f8fb;
+    color:#111827;
+    min-height:100vh;
+    transition:background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode{
+    background-color:#ffffff;
+    color:#111827;
+}
+
+.header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:16px 24px;
+    background-color:#f8f8e6;
+    box-shadow:0 2px 8px rgba(15,23,42,0.08);
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.site-name h1{
+    margin:0;
+    font-size:26px;
+    letter-spacing:0.5px;
+}
+
+.accbut {
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.accbut .button,
+.toggle-mode{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    border:none;
+    align-content: end;
+    background-color:#e2e8f0;
+    color:#111827;
+    cursor:pointer;
+    transition:transform 0.2s ease, background-color 0.2s ease;
+}
+
+.accbut .button:hover,
+.toggle-mode:hover,
+.buttons:hover {
+    transform:translateY(-1px);
+}
+
+.layout{
+    display:flex;
+    flex-direction:row;
+    gap:24px;
+    max-width: 1180px;
+    margin: 25px;
+    padding: 0 0px;
+    align-items:flex-start;
+    position:absolute;
+}
+
+.navbar{
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    gap:24px;
+    flex:0 0 280px;
+    min-width:260px;
+    background-color: #e8edf5;
+    padding: 16px;
+    border-radius:15px;
+    box-shadow:0 20px 60px rgba(15,23,42,0.08);
+    height:33rem;
+    max-height: 33rem;
+    width:fit-content;
+    
+}
+
+.bar-title h3{
+    margin:0;
+    font-size:18px;
+}
+
+.navi-buttons{
+    display: flex;
+    flex-direction:column;
+    gap: 12px;
+}
+
+.buttons{
+    width:100%;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 14px;
+    background-color: #d1d9e6;
+    color: #111827;
+    text-align:left;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.buttons:focus,
+.accbut .button:focus,
+.toggle-mode:focus {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
+}
+
+.mainarea{
+    flex:1;
+    padding: 0;
+    margin: 0;
+}
+
+.content{
+    background: rgba(255,255,255,0.95);
+    padding: 32px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(15,23,42,0.08);
+    margin-top: 3px;
+    height: 33rem;
+    max-height:33rem ;
+    width: 62rem;
+    max-width: 62rem;
+}
+
+.content h2{
+    margin-top:0;
+    font-size:32px;
+}
+
+.content p{
+    margin:16px 0 0;
+    max-width: 720px;
+    color: #374151;
+}
+
+body.dark-mode {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+body.dark-mode .header {
+    background-color: #1f2937;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+}
+
+body.dark-mode .navbar {
+    background-color: #111827;
+}
+
+body.dark-mode .content {
+    background: rgba(15,23,42,0.9);
+}
+
+body.dark-mode .buttons,
+body.dark-mode .accbut .button,
+body.dark-mode .toggle-mode {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+body.dark-mode .buttons:hover,
+body.dark-mode .accbut .button:hover,
+body.dark-mode .toggle-mode:hover {
+    background-color: #4b5563;
+}

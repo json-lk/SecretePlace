@@ -6,6 +6,7 @@
   --white: #ffffff;
   --text: #3a122a;
   --surface: rgba(255, 255, 255, 0.92);
+  --transback:#ffffff;
 }
 
 * {
@@ -17,18 +18,16 @@ body {
   min-height: 100%;
   display: grid;
   place-items: center;
-  padding: 2rem;
+  padding: 4rem 2rem;
   font-family: 'Inter', 'Segoe UI', sans-serif;
   background: radial-gradient(circle at top left, rgba(255, 142, 207, 0.45), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 50%),
     linear-gradient(135deg, #fff8f0 0%, #ffe9f7 50%, #fff9d8 100%);
   color: var(--text);
 }
 
 .main {
-  background: radial-gradient(circle at top left, rgba(255, 142, 207, 0.45), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 30%),
-    linear-gradient(135deg, #fff8f0 0%, #ffe9f7 50%, #fff9d8 100%);
+  background: var(--transback);
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
