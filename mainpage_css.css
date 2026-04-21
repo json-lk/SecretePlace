@@ -6,7 +6,7 @@ body{
     margin:0;
     font-family: Inter, Arial, sans-serif;
     line-height: 1.6;
-    background-color:#f7f8fb;
+    background-color:#fbf9f7;
     color:#111827;
     min-height:100vh;
     transition:background-color 0.3s ease, color 0.3s ease;
@@ -23,17 +23,25 @@ body.light-mode{
     justify-content:space-between;
     gap:16px;
     padding:16px 24px;
-    background-color:#f8f8e6;
+    background-color:#ebf1f5e0;
     box-shadow:0 2px 8px rgba(15,23,42,0.08);
     position:sticky;
     top:0;
     z-index:10;
+    border-bottom: solid rgba(56, 55, 55, 0.199);
+    border-width: 0.5px;
 }
 
 .site-name h1{
     margin:0;
     font-size:26px;
     letter-spacing:0.5px;
+    color: #1e15c0;
+}
+
+.site-name:hover{
+    animation: forwards;
+    cursor:default;
 }
 
 .accbut {
@@ -50,14 +58,14 @@ body.light-mode{
     border:none;
     align-content: end;
     background-color:#e2e8f0;
-    color:#111827;
+    color:#ffffff;
     cursor:pointer;
     transition:transform 0.2s ease, background-color 0.2s ease;
 }
 
 .accbut .button:hover,
 .toggle-mode:hover,
-.buttons:hover {
+.buttons:hover, {
     transform:translateY(-1px);
 }
 
@@ -65,7 +73,7 @@ body.light-mode{
     display:flex;
     flex-direction:row;
     gap:24px;
-    max-width: 1180px;
+    max-width: 98%;
     margin: 25px;
     padding: 0 0px;
     align-items:flex-start;
@@ -83,69 +91,172 @@ body.light-mode{
     padding: 16px;
     border-radius:15px;
     box-shadow:0 20px 60px rgba(15,23,42,0.08);
-    height:33rem;
-    max-height: 33rem;
+    height:-webkit-fill-available;
+    max-height: 32rem;
     width:fit-content;
-    
-}
-
-.bar-title h3{
-    margin:0;
-    font-size:18px;
 }
 
 .navi-buttons{
     display: flex;
-    flex-direction:column;
+    flex-direction:row;
     gap: 12px;
 }
 
+.content{
+    flex:1;
+    padding-bottom: 8px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(15,23,42,0.08);
+    height:-webkit-fill-available;
+    max-height:100% ;
+}
+ 
 .buttons{
     width:100%;
     padding: 14px 18px;
     border: none;
     border-radius: 14px;
-    background-color: #d1d9e6;
+    background-color: #dde4f0;
     color: #111827;
     text-align:left;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.buttons:focus,
-.accbut .button:focus,
-.toggle-mode:focus {
+.buttons:hover,
+.accbut .button:hover,
+.toggle-mode:hover,
+.content:hover,
+.controls button:hover,
+.typebox button:hover {
     outline: 2px solid #4f46e5;
     outline-offset: 2px;
 }
 
-.mainarea{
+.buttons:focus,
+.accbut .button:focus,
+.toggle-mode:focus,
+.content:focus,
+.controls button:focus,
+.typebox button:focus {
+    outline: 2px solid #ec4949;
+    outline-offset: 2px;
+}
+
+.chatroom{
     flex:1;
-    padding: 0;
-    margin: 0;
-}
-
-.content{
-    background: rgba(255,255,255,0.95);
-    padding: 32px;
+    background: rgba(222, 235, 243, 0);
+    padding-bottom: 15px;
     border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(15,23,42,0.08);
-    margin-top: 3px;
+    box-shadow: 0 20px 60px rgba(47, 143, 76, 0.13);
     height: 33rem;
-    max-height:33rem ;
-    width: 62rem;
-    max-width: 62rem;
+    max-height:100% ;
+    width: 97rem;
+    max-width: 73%;
 }
 
-.content h2{
-    margin-top:0;
-    font-size:32px;
+.chatroom .header{
+    background-color:#f7f7ea00;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
 }
 
-.content p{
-    margin:16px 0 0;
-    max-width: 720px;
-    color: #374151;
+.header button{
+    border-radius: 30%;
+    border:none;
+    height:2rem;
+    width:2rem;
+}
+
+.header button:hover{
+    transform: translateY(-2px);
+    
+}
+
+.controls {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    position: sticky;
+}
+
+.chatroom .messages {
+    width: 100%;
+    height: calc(100% - 100px);
+    background: #ebfae677;
+    overflow: auto;
+}
+
+.chatroom .messages .message{
+    display: flex;
+    padding: 5px;
+}
+.chatroom .messages .message .text{
+    background: #f39595;
+    box-shadow: 0px 0px 0px 0px rgb(0,0,0,0.5);
+    padding: 8px;
+    border-radius: 20px;
+}
+
+.chatroom .messages .message.my-message{
+    justify-content: flex-end;
+}
+
+.chatroom .messages .message.other-message{
+    justify-content: flex-start;
+}
+
+.chatroom .messages .message .you{
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 2px;
+}
+
+.chatroom .messages .message .text{
+    word-wrap: break-word;
+}
+
+.chatroom .messages .update{
+    text-align: center;
+    padding: 10px;
+    font-style: italic;
+    color: #777777bd;
+}
+
+.chatroom .typebox{
+    display: flex;
+    width: 100%;
+    height: 50px;
+    padding-bottom: 5px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+
+}
+
+.chatroom .typebox input{
+    flex: 1;
+    height:100%;
+    font-size:18px;
+    border-radius: 20px;
+    border: solid #3534346c;
+    border-width: 1px;
+    background: #d8dde460;
+    padding: 20px;
+    margin-bottom: 15px;
+    margin-left: 10px;    
+}
+
+.chatroom .typebox button{
+    width: 80px;
+    height: 100%;
+    background: #d8dde460;
+    color:#7a0808;
+    border: solid #3534346c;
+    border-width: 1px;
+    border-radius: 30px;
+    margin-left: 10px;
+    margin-right: 10px;
+    font-size: xx-large;
 }
 
 body.dark-mode {
@@ -159,11 +270,19 @@ body.dark-mode .header {
 }
 
 body.dark-mode .navbar {
-    background-color: #111827;
+    background-color: #161e2e;
 }
 
 body.dark-mode .content {
     background: rgba(15,23,42,0.9);
+}
+
+body.dark-mode .messages{
+    background: #101520;
+}
+
+body.dark-mode .typebox{
+    background-color: #101520;
 }
 
 body.dark-mode .buttons,
@@ -176,5 +295,9 @@ body.dark-mode .toggle-mode {
 body.dark-mode .buttons:hover,
 body.dark-mode .accbut .button:hover,
 body.dark-mode .toggle-mode:hover {
+    background-color: #4b5563;
+}
+
+body.dark-mode .messages .message .text{
     background-color: #4b5563;
 }

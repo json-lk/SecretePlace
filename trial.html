@@ -19,17 +19,18 @@
     </div>
     <div class="layout">
         <navbar class="navbar">
-            <div class="bar-title">
-                <h3>Control Point</h3>
-            </div>
             <nav class="navi-buttons">
                 <button class="buttons" type="button" aria-label="Home">🏠</button>
                 <button class="buttons" type="button" aria-label="Create">➕</button>
                 <button class="buttons" type="button" aria-label="Settings">⚙️</button>
                 <button class="buttons" type="button" aria-label="Help">❓</button>
+                
             </nav>
+            <content class="content">
+
+            </content>
         </navbar>
-                <mma class="chatroom">
+        <mma class="chatroom">
             <div class="header">
                 <div class="logo">Chatroom</div>
                 <div class="controls">
@@ -37,26 +38,32 @@
                     <button id="exit">✖</button>      
                 </div>    
             </div>
+
             <div class="messages">
-                <div class="my-message">
-                    <div class="you">you</div>
-                    <div class="message">hiiii</div>
+                <div class="message my-message">
+                    <div>
+                        <div class="you">you</div>
+                        <div class="text">hiiii</div>
+                    </div>
+                </div>
+
+                <div class="update">
+                    other person just joned the group
+                </div>
+
+                <div class="message other-message">
+                    <div>
+                        <div class="you">other</div>
+                        <div class="text">how are you</div>
+                    </div>
                 </div>
             </div>
-            <div class="update">
-                other person just joned the group
-            </div>
-            <div class="other-message">
-                <div class="you">other</div>
-                <div class="message">how are you</div>
-            </div>
             <div class="typebox">
-                <input type="text" id="messges-input">
-                <button id="send-message">></button> 
+                <input type="text" id="messages-input">
+                <button id="send-message"><b>></b></button> 
             </div>
         </mma>
     </div>
-
     <script src="mainpage_script.js"></script>
 </body>
 </html>
