@@ -1,0 +1,14 @@
+{
+  "chatrooms": [
+    {
+      "name": "General",
+      "password": "12345",
+      "messages": []
+    },
+    {
+      "name": "Tech Talk",
+      "password": "abcde",
+      "messages": []
+    }
+  ]
+}

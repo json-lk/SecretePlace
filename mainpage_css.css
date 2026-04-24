@@ -25,7 +25,7 @@ body.light-mode{
     padding:16px 24px;
     background-color:#ebf1f5e0;
     box-shadow:0 2px 8px rgba(15,23,42,0.08);
-    position:sticky;
+    position:static;
     top:0;
     z-index:10;
     border-bottom: solid rgba(56, 55, 55, 0.199);
@@ -388,6 +388,8 @@ body.dark-mode .dropdown-item:active {
     max-height:100% ;
     width: 97rem;
     max-width: 73%;
+    flex-direction: column;
+    
 }
 
 .chatroom .header{

@@ -4,24 +4,21 @@ const createChatForm = document.getElementById('create-form');
 const chatRooms = []; 
 const displayBox = document.getElementById('display-box'); 
 
-
 createChatBtn.addEventListener('click', () => {
     createChatModal.classList.remove('hidden');
 });
-
 
 createChatModal.querySelector('.close-but').addEventListener('click', () => {
     createChatModal.classList.add('hidden');
 });
 
-createChatForm.addEventListener('submit', (e) => {
+createChatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const chatName = document.getElementById('chat-name').value;
     const chatPassword = document.getElementById('chat-password').value;
     const chatId = document.getElementById('chat-id').value;
 
-    
     const chatRoom = {
         name: chatName,
         password: chatPassword,
@@ -29,15 +26,14 @@ createChatForm.addEventListener('submit', (e) => {
         messages: [] 
     };
 
-    
     chatRooms.push(chatRoom);
     addChatRoomToDisplay(chatRoom);
     
+    await saveChatRoomsToFile(chatRooms.json); // Save chat rooms to the JSON file
     
     createChatForm.reset();
     createChatModal.classList.add('hidden');
 });
-
 
 function addChatRoomToDisplay(chatRoom) {
     const chatRoomButton = document.createElement('button');
@@ -47,13 +43,10 @@ function addChatRoomToDisplay(chatRoom) {
     displayBox.appendChild(chatRoomButton);
 }
 
-
 function openChatRoom(chatRoom) {
-    
     const chatroomHeader = document.querySelector('.chatroom .header .logo');
     chatroomHeader.textContent = chatRoom.name;
 
-    
     const messagesContainer = document.querySelector('.chatroom .messages');
     messagesContainer.innerHTML = ''; 
     chatRoom.messages.forEach(message => {
@@ -63,14 +56,27 @@ function openChatRoom(chatRoom) {
         messagesContainer.appendChild(messageDiv);
     });
 
-  
     const chatroom = document.querySelector('.chatroom');
     chatroom.style.display = 'flex';
 }
 
-
 function sendMessage(chatRoom, message) {
     chatRoom.messages.push(message);
-    // Update the chat room display
     openChatRoom(chatRoom);
 }
+
+
+
+// Function to save chat rooms to a JSON file
+const joinChatBtn = document.getElementById('join-button');
+const joinChatModal = document.getElementById('join-chatroom');
+const joinChatForm = document.getElementById('join-form');
+
+
+joinChatBtn.addEventListener('click', () => {
+    joinChatModal.classList.remove('hidden');
+});
+
+joinChatModal.querySelector('.close-but').addEventListener('click', () => {
+    joinChatModal.classList.add('hidden');
+});

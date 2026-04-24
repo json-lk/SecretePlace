@@ -81,22 +81,20 @@
             <content class="content">
                 <div class="dislpay" id="display-box">
                     <div class="chat" id="room">
-                        <div class="chatrum" id="chatrum">
-                            <button id="room-but" type="button" class="chatrm-but">name</button>
-                        </div>
+
                     </div>
 
                 </div>
-                <div class="join" id="join">
-                    <button class="buttons" type="button" id="join" >Join room</button>
-                </div>
             </content>
+            <div class="join" id="join">
+                <button class="buttons" type="button" id="join-button" >Join room</button>
+            </div>
         </navbar>
         <mma class="chatroom">
             <div class="header">
                 <div class="logo">Chatroom</div>
                 <div class="controls">
-                    <button id="settings" type="button" aria-label="Settings">⚙️</button>
+                    <button id="settings" type="button" aria-label="Settings">🗑</button>
                     <button id="exit" type="button" aria-label="Minimize">−</button>      
                 </div>    
             </div>
@@ -141,6 +139,22 @@
             </div>
         </div>
     </div>
+
+    
+    <div id="join-chatroom" class="auth hidden">
+        <div class="auth-content" id="join-chat-content">
+            <div id="join-form-container" class="authin active">
+                <button class="close-but" id="close-join">&times;</button>
+                <h2>Join Chat Room</h2>
+                <form id="join-form">
+                    <input type="text" id="chat-name" placeholder="Chat Room Name" required>
+                    <input type="password" id="chat-password" placeholder="Password" required>
+                    <button type="submit">Join Chat Room</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
 
     <script src="mainpage_script.js"></script>
