@@ -58,7 +58,7 @@ socket.on('signupResponse', (response) => {
         alert("Welcome, " + response.user.name + "! Logging you in...");
         
         // Redirect to the chat page
-        window.location.href = 'This page.html'; 
+        window.location.href = './This%20page.html'; 
     } else {
         alert("Signup failed: " + response.message);
     }
@@ -86,9 +86,9 @@ loginForm.addEventListener('submit', (e) => {
         // SAVE HERE first before moving pages
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         // Then move to the chat page
-        window.location.href = 'this page.html'; 
+        window.location.href = './This%20page.html'; 
     } else {
         alert(res.message);
     }
-});
+    });
 });
