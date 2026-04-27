@@ -1,19 +1,17 @@
 import { io } from "socket.io-client";
 
-// Vercel deployment configuration
-// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Vercel environment variables)
+// Render deployment configuration
+// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Render environment variables)
 // Falls back to localhost for development
 const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
-// Initialize socket connection with Vercel-compatible settings
+// Initialize socket connection with Render-compatible settings
 export const socket = io(URL, {
   transports: ["websocket", "polling"],
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
-  reconnectionAttempts: 5,
-  secure: true,
-  rejectUnauthorized: false
+  reconnectionAttempts: 5
 });
 
 const signupBtn = document.getElementById('signup-btn');
@@ -73,7 +71,7 @@ socket.on('signupResponse', (response) => {
 
         alert("Welcome, " + response.user.name + "! Logging you in...");
         
-        // Redirect to the chat page (works with Vercel routing)
+        // Redirect to the chat page
         window.location.href = '/chat.html'; 
     } else {
         alert("Signup failed: " + response.message);
