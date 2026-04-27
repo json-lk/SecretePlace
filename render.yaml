@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: secreteplace-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: CLIENT_URL
+        # Set this to your Vercel frontend URL
+        # Example: https://secreteplace.vercel.app
+        sync: false
+      - key: SESSION_SECRET
+        sync: false

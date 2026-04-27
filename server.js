@@ -4,6 +4,8 @@ const socketIo = require('socket.io');
 const fs = require('fs');
 const path = require('path');
 const session = require('express-session');
+const bcrypt = require('bcrypt'); // Import bcrypt
+const { v4: uuidv4 } = require('uuid'); // Import uuid
 const sharedsession = require("express-socket.io-session");
 require('dotenv').config();
 
@@ -24,7 +26,7 @@ const io = socketIo(server, {
 // --- 1. PERSISTENT SESSION ---
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
-    resave: true,
+    resave: false, // Typically set to false unless your store needs it
     saveUninitialized: true,
     cookie: { 
         secure: NODE_ENV === 'production',
@@ -69,6 +71,10 @@ const getVisibleRooms = (user) => {
     const joinedRoomNames = [...new Set(messages
         .filter(m => m.sender === user.name)
         .map(m => m.roomName))];
+    // Note: This logic means a room is visible if the user owns it OR has sent a message in it.
+    // If a user joins a room but never sends a message, it won't appear in their sidebar on subsequent logins.
+    // Consider adding a server-side "joinedRooms" array per user if you want to track explicit joins
+    // regardless of message activity.
     return chatRooms.filter(r => r.owner === user.email || joinedRoomNames.includes(r.name));
 };
 
@@ -82,12 +88,12 @@ io.on('connection', (socket) => {
         socket.emit('initRooms', getVisibleRooms(session.user));
     }
 
-    socket.on('login', (data) => {
-        const user = users.find(u => u.email === data.email && u.password === data.password);
-        if (user) {
+    socket.on('login', async (data) => {
+        const user = users.find(u => u.email === data.email);
+        if (user && await bcrypt.compare(data.password, user.password)) { // Compare hashed password
             session.user = { name: user.name, email: user.email };
             session.save(() => {
-                socket.emit('loginResponse', { success: true, user: session.user });
+                socket.emit('loginResponse', { success: true, user: { name: user.name, email: user.email } }); // Don't send password hash to client
                 socket.emit('initRooms', getVisibleRooms(session.user));
             });
         } else {
@@ -95,7 +101,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('signup', (data) => {
+    socket.on('signup', async (data) => { // Make async for bcrypt
         // Check if user already exists
         if (users.find(u => u.email === data.email)) {
             return socket.emit('signupResponse', { success: false, message: 'Email already exists!' });
@@ -105,16 +111,17 @@ io.on('connection', (socket) => {
         const newUser = {
             name: data.name,
             email: data.email,
-            password: data.password
+            password: await bcrypt.hash(data.password, 10) // Hash the password
         };
 
         users.push(newUser);
         saveData('users.json', users);
 
         // Auto-login after signup
-        session.user = { name: newUser.name, email: newUser.email };
+        // Only store non-sensitive user data in session
+        session.user = { name: newUser.name, email: newUser.email }; 
         session.save(() => {
-            socket.emit('signupResponse', { success: true, user: session.user });
+            socket.emit('signupResponse', { success: true, user: { name: newUser.name, email: newUser.email } });
             socket.emit('initRooms', getVisibleRooms(session.user));
         });
     });
@@ -125,7 +132,7 @@ io.on('connection', (socket) => {
             return socket.emit('errorMsg', 'Login required before creating a room.');
         }
 
-        const roomId = roomData.id && roomData.id.trim() !== "" ? roomData.id : Date.now().toString();
+        const roomId = roomData.id && roomData.id.trim() !== "" ? roomData.id : uuidv4(); // Use UUID for robust IDs
 
         if (chatRooms.find(r => r.id === roomId || r.name === roomData.name)) {
             return socket.emit('errorMsg', 'Room name or ID already exists!');
@@ -170,25 +177,27 @@ io.on('connection', (socket) => {
     });
 
     // --- Profile & Logout ---
-    socket.on('updateProfile', (data) => {
+    socket.on('updateProfile', async (data) => { // Make async for bcrypt
         const idx = users.findIndex(u => u.email === data.oldEmail);
         if (idx !== -1) {
             users[idx] = { ...users[idx], name: data.newName, email: data.newEmail };
-            if(data.newPassword) users[idx].password = data.newPassword;
+            if(data.newPassword) {
+                users[idx].password = await bcrypt.hash(data.newPassword, 10); // Hash new password
+            }
             saveData('users.json', users);
             session.user = { name: data.newName, email: data.newEmail };
-            session.save(() => socket.emit('updateProfileResponse', { success: true, user: session.user }));
+            session.save(() => socket.emit('updateProfileResponse', { success: true, user: { name: data.newName, email: data.newEmail } }));
         }
     });
 
-    socket.on('deleteAccount', (data) => {
+    socket.on('deleteAccount', async (data) => { // Make async for bcrypt
         if (!session || !session.user) {
             return socket.emit('errorMsg', 'Login required.');
         }
 
         // Verify password
-        const user = users.find(u => u.email === session.user.email && u.password === data.password);
-        if (!user) {
+        const user = users.find(u => u.email === session.user.email);
+        if (!user || !(await bcrypt.compare(data.password, user.password))) { // Compare hashed password
             return socket.emit('errorMsg', 'Password is incorrect.');
         }
 
@@ -203,12 +212,15 @@ io.on('connection', (socket) => {
         const userRoomIds = chatRooms
             .filter(r => r.owner === session.user.email)
             .map(r => r.id);
+        const userRoomNames = chatRooms
+            .filter(r => r.owner === session.user.email)
+            .map(r => r.name);
         
         chatRooms = chatRooms.filter(r => r.owner !== session.user.email);
         saveData('rooms.json', chatRooms);
 
         // Delete messages from those rooms
-        messages = messages.filter(m => !userRoomIds.includes(chatRooms.find(r => r.name === m.roomName)?.id));
+        messages = messages.filter(m => !userRoomNames.includes(m.roomName)); // Optimized filtering
         saveData('messages.json', messages);
 
         // Logout

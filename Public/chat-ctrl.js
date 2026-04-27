@@ -79,8 +79,6 @@ socket.on('initRooms', (rooms) => {
 
 
 function addRoomToSidebar(room) {
-    const displayBox = document.getElementById('display-box');
-    
     // Prevent duplicates
     if (document.getElementById(`room-btn-${room.id}`)) return;
 
@@ -212,7 +210,7 @@ chatroomSettingsBtn.addEventListener('click', () => {
     const confirmDelete = confirm(`Are you sure you want to delete "${currentRoom}"? This will remove it for everyone.`);
 
     if (confirmDelete) {
-    socket.emit('deleteRoom', currentRoomId);
+        socket.emit('deleteRoom', { roomId: currentRoomId });
     }
 });
 
@@ -272,11 +270,17 @@ socket.on('deleteResponse', () => {
 socket.on('errorMsg', (msg) => {
     alert(msg);
 });
+// This listener is redundant as initRooms is emitted on sessionRestore/login/signup
+// socket.on('getRooms', () => {
+//     const user = JSON.parse(localStorage.getItem('currentUser'));
+//     if (user) {
+//         socket.emit('initRooms');
+//     }
+// });
 
-// Handle getRooms request after signup
-socket.on('getRooms', () => {
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (user) {
-        socket.emit('initRooms');
-    }
-});
+// This listener is not emitted by the server in the provided server.js
+// socket.on('refreshHistory', () => {
+//     if (currentRoom) {
+//         socket.emit('joinRoom', currentRoom);
+//     }
+// });

@@ -1,0 +1,13 @@
+{
+  "buildCommand": "echo 'Frontend uses static files from Public folder'",
+  "outputDirectory": "Public",
+  "env": {
+    "REACT_APP_API_URL": "@api_url"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-const socket = io('http://localhost:3000', {
+const socket = io({
     withCredentials: true
 });
 const toggleButton = document.getElementById('theme-toggle');
@@ -46,39 +46,11 @@ document.getElementById('logins').addEventListener('submit', (e) => {
     socket.emit('login', { email, password });
 });
 
-
 socket.on('sessionRestore', (data) => {
     if (data.user) {
         localStorage.setItem('currentUser', JSON.stringify(data.user));
         authModal.classList.add('hidden');
          updateAccountButton();
-    }
-});
-
-// 1. Move the listener OUTSIDE the submit event to prevent duplicate alerts
-socket.on('signupResponse', (response) => {
-    if (response.success) {
-        // 2. Save the user data so the messaging functions can access it
-        const userData = {
-            name: response.user.name,
-            email: response.user.email
-        };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-
-        // 3. UI Update: Close the signup modal/form immediately
-        // Assuming 'signups' is the form and you have a modal or container to hide
-        document.getElementById('signups').classList.remove('active');
-
-        // If you have a main wrapper for the login/signup UI, hide it:
-        const authModalTemp = document.getElementById('auth');
-        if (authModalTemp) authModalTemp.classList.add('hidden');
-
-        alert(`Welcome, ${response.user.name}! You are now logged in.`); 
-    
-        socket.emit('getRooms'); 
-
-    } else {
-        alert(response.message);
     }
 });
 
@@ -93,26 +65,6 @@ document.getElementById('signups').addEventListener('submit', (e) => {
     socket.emit('signup', { name, email, password });
 });
 
-// --- SERVER RESPONSES ---
-socket.on('loginResponse', (res) => {
-    if (res.success) {
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        authModal.classList.add('hidden');
-        updateAccountButton();
-    } else {
-        alert(res.message);
-    }
-});
-
-socket.on('signupResponse', (res) => {
-    if (res.success) {
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        authModal.classList.add('hidden');
-         updateAccountButton();
-    } else {
-        alert(res.message);
-    }
-});
 
 // --- PROFILE EDIT & DELETE ---
 document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
