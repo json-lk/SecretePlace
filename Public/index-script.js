@@ -1,3 +1,12 @@
+import { io } from "socket.io-client";
+
+// This will use the Vercel environment variable in production
+const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+
+export const socket = io(URL, {
+  transports: ["websocket"] 
+});
+
 const socket = io();
 
 const signupBtn = document.getElementById('signup-btn');
