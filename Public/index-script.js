@@ -1,11 +1,11 @@
 import { io } from "socket.io-client";
 
-// Render deployment configuration
-// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Render environment variables)
+// Vercel deployment configuration
+// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Vercel environment variables)
 // Falls back to localhost for development
 const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
-// Initialize socket connection with Render-compatible settings
+// Initialize socket connection with Vercel-compatible settings
 export const socket = io(URL, {
   transports: ["websocket", "polling"],
   reconnection: true,
