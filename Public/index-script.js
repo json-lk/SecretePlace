@@ -1,13 +1,18 @@
 import { io } from "socket.io-client";
 
-// This will use the Vercel environment variable in production
+// Render deployment configuration
+// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Render environment variables)
+// Falls back to localhost for development
 const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
+// Initialize socket connection with Render-compatible settings
 export const socket = io(URL, {
-  transports: ["websocket"] 
+  transports: ["websocket", "polling"],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: 5
 });
-
-const socket = io();
 
 const signupBtn = document.getElementById('signup-btn');
 const loginBtn = document.getElementById('login-btn');
