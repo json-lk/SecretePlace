@@ -17,21 +17,22 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const io = socketIo(server, {
     cors: {
-        origin: CLIENT_URL,
+        origin: process.env.CLIENT_URL, // This will be your Vercel URL
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
-// --- 1. PERSISTENT SESSION ---
+app.set('trust proxy', 1); 
+
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
-    resave: false, // Typically set to false unless your store needs it
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: true, // Set to false in production usually to comply with laws
     cookie: { 
-        secure: NODE_ENV === 'production',
+        secure: NODE_ENV === 'production', // true on Render
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-site cookies
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000 
     }
 });
@@ -285,4 +286,4 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, () => console.log('Server running on http://localhost:3000'));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
