@@ -1,12 +1,8 @@
 {
+  "version": 2,
   "cleanUrls": true,
-  "buildCommand": "echo 'Building static frontend...'",
   "outputDirectory": "Public",
   "rewrites": [
-    {
-      "source": "/chat",
-      "destination": "/chat.html"
-    },
     {
       "source": "/(.*)",
       "destination": "/$1"
