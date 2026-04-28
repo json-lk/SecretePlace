@@ -2,9 +2,10 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
+  "outputDirectory": "Public",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/chat",
       "destination": "/This page.html"
     },
     {
