@@ -68,7 +68,7 @@ socket.on('signupResponse', (response) => {
         alert("Welcome, " + response.user.name + "! Logging you in...");
         
         // Redirect to the chat page
-        window.location.href = '/chat.html'; 
+        window.location.href = '/This page.html'; 
     } else {
         alert("Signup failed: " + response.message);
     }
@@ -98,7 +98,7 @@ socket.on('loginResponse', (res) => {
     if (res.success) {
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         // Then move to the chat page
-        window.location.href = '/chat.html'; 
+        window.location.href = '/This page.html'; 
     } else {
         alert(res.message);
     }
