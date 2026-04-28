@@ -1,12 +1,6 @@
 // This works because the CDN script adds 'io' to the global window object
 const URL = "https://non-e.onrender.com"; // Put your actual Render URL here
 
-const socket = io(URL, {
-  transports: ["websocket", "polling"],
-  withCredentials: true, // REQUIRED for sessions/cookies to work cross-domain
-  reconnection: true
-});
-
 // Initialize socket connection with Vercel-compatible settings
 export const socket = io(URL, {
   transports: ["websocket", "polling"],
