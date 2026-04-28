@@ -1,6 +1,3 @@
-const socket = io({
-    withCredentials: true
-});
 const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
