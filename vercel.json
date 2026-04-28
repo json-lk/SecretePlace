@@ -4,8 +4,8 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/chat",
-      "destination": "/chat.html"
+      "source": "/This page",
+      "destination": "/This page.html"
     },
     {
       "source": "/(.*)",
