@@ -1,4 +1,4 @@
-onst toggleButton = document.getElementById('theme-toggle');
+const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
 const accountDropdown = document.getElementById('account-dropdown');
