@@ -5,6 +5,18 @@ const accountDropdown = document.getElementById('account-dropdown');
 const editProfileModal = document.getElementById('edit-profile-modal');
 
 
+function updateAccountButton() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+    accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
+    accountButton.style.backgroundColor = '#4f46e5';
+    } else {
+    accountButton.textContent = '👤';
+    accountButton.style.backgroundColor = '#e2e8f0';
+    }
+}
+
+
 // Run this when the script loads
 window.onload = () => {
     const savedUser = localStorage.getItem('currentUser');
@@ -24,16 +36,6 @@ toggleButton.addEventListener('click', () => {
 });
 
 // --- UI HELPERS ---
-function updateAccountButton() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-    accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
-    accountButton.style.backgroundColor = '#4f46e5';
-    } else {
-    accountButton.textContent = '👤';
-    accountButton.style.backgroundColor = '#e2e8f0';
-    }
-}
 
 // --- AUTH ACTIONS ---
 document.getElementById('logins').addEventListener('submit', (e) => {
