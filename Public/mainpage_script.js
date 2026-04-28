@@ -107,11 +107,19 @@ socket.on('deleteResponse', () => {
 });
 
 // Dropdown Toggles
+// Dropdown Toggles
 accountButton.addEventListener('click', (e) => {
     e.stopPropagation();
     const user = localStorage.getItem('currentUser');
-    if (!user) authModal.classList.remove('hidden');
-    else accountDropdown.classList.toggle('hidden');
+    
+    if (!user) {
+        // If no user, show the Login/Signup modal
+        authModal.classList.remove('hidden');
+        accountDropdown.classList.add('hidden'); // Ensure dropdown is closed
+    } else {
+        // If user exists, toggle the menu that has Edit and Logout
+        accountDropdown.classList.toggle('hidden');
+    }
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => {
