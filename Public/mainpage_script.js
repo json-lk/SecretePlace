@@ -47,7 +47,13 @@ socket.on('sessionRestore', (data) => {
     if (data.user) {
         localStorage.setItem('currentUser', JSON.stringify(data.user));
         authModal.classList.add('hidden');
-         updateAccountButton();
+        updateAccountButton();
+        // Trigger a room refresh since we are now confirmed logged in
+        socket.emit('getRooms'); 
+    } else {
+        // If server says no session, clear local storage
+        localStorage.removeItem('currentUser');
+        authModal.classList.remove('hidden');
     }
 });
 
