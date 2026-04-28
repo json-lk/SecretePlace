@@ -1,8 +1,4 @@
-import { socket } from './index-script.js';
-
-// ... the rest of your code ...
-
-const toggleButton = document.getElementById('theme-toggle');
+onst toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
 const accountDropdown = document.getElementById('account-dropdown');
