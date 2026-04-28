@@ -1,8 +1,3 @@
-import { socket } from './index-script.js';
-
-// ... the rest of your code ...
-
-// Note: 'socket' is already defined in the other script, 
 // if loading separately ensure they don't conflict or use the same instance.
 const createChatBtn = document.getElementById('create-chat');
 const createChatModal = document.getElementById('create-chatroom');
