@@ -1,13 +1,15 @@
 {
-  "buildCommand": "echo 'Frontend uses static files from Public folder'",
+  "cleanUrls": true,
+  "buildCommand": "echo 'Building static frontend...'",
   "outputDirectory": "Public",
-  "env": {
-    "REACT_APP_API_URL": "https://non-e.onrender.com"
-  },
   "rewrites": [
     {
+      "source": "/chat",
+      "destination": "/chat.html"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/$1"
     }
   ]
 }
