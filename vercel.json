@@ -2,7 +2,7 @@
   "buildCommand": "echo 'Frontend uses static files from Public folder'",
   "outputDirectory": "Public",
   "env": {
-    "REACT_APP_API_URL": "@api_url"
+    "REACT_APP_API_URL": "https://non-e.onrender.com"
   },
   "rewrites": [
     {
