@@ -1,6 +1,6 @@
 const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
-const accountButton = document.querySelector('.account-button');
+const accountButton = document.getElementId('account-button');
 const accountDropdown = document.getElementById('account-dropdown');
 const editProfileModal = document.getElementById('edit-profile-modal');
 
