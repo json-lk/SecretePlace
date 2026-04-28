@@ -115,7 +115,7 @@ accountButton.addEventListener('click', (e) => {
     if (!user) {
         // If no user, show the Login/Signup modal
         authModal.classList.remove('hidden');
-        accountDropdown.classList.remove('hidden'); // Ensure dropdown is closed
+        accountDropdown.classList.add('hidden'); // Ensure dropdown is closed
     } else {
         // If user exists, toggle the menu that has Edit and Logout
         accountDropdown.classList.toggle('hidden');
