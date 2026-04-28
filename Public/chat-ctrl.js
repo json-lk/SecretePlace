@@ -28,9 +28,9 @@ createChatForm.addEventListener('submit', (e) => {
     if (!nameInput.value.trim()) return alert("Room name is required!");
 
     const roomData = {
-        name: nameInput.value,
+        name: nameInput.value.trim(),
         password: passInput.value,
-        id: idInput.value
+        id: idInput.value.trim()
     };
 
     console.log("Sending room data to server:", roomData);
@@ -79,7 +79,6 @@ socket.on('initRooms', (rooms) => {
 
 
 function addRoomToSidebar(room) {
-    // Prevent duplicates
     if (document.getElementById(`room-btn-${room.id}`)) return;
 
     const roomDiv = document.createElement('div');
