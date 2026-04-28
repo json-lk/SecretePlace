@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/chat",
-      "destination": "/chat.html"
+      "destination": "/This page.html"
     },
     {
       "source": "/(.*)",
