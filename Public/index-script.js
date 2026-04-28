@@ -1,5 +1,5 @@
 // This works because the CDN script adds 'io' to the global window object
-const URL = "https://your-backend-name.onrender.com"; // Put your actual Render URL here
+const URL = "https://non-e.onrender.com"; // Put your actual Render URL here
 
 const socket = io(URL, {
   transports: ["websocket", "polling"],
