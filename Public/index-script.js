@@ -1,8 +1,12 @@
-import { io } from "socket.io-client";
+// This works because the CDN script adds 'io' to the global window object
+const URL = "https://your-backend-name.onrender.com"; // Put your actual Render URL here
 
-// Vercel deployment configuration
-// Uses NEXT_PUBLIC_BACKEND_URL in production (set in Vercel environment variables)
-// Falls back to localhost for development
+const socket = io(URL, {
+  transports: ["websocket", "polling"],
+  withCredentials: true, // REQUIRED for sessions/cookies to work cross-domain
+  reconnection: true
+});
+
 const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
 // Initialize socket connection with Vercel-compatible settings
