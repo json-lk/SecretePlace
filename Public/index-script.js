@@ -7,8 +7,6 @@ const socket = io(URL, {
   reconnection: true
 });
 
-const URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-
 // Initialize socket connection with Vercel-compatible settings
 export const socket = io(URL, {
   transports: ["websocket", "polling"],
