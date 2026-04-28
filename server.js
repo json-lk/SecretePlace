@@ -17,7 +17,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 const io = socketIo(server, {
     cors: {
-        origin: "https://your-frontend.vercel.app", 
+        origin: "https://none-mauve.vercel.app/", 
         methods: ["GET", "POST"],
         credentials: true
     }
