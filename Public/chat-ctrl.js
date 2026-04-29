@@ -10,7 +10,9 @@ const messagesContainer = document.querySelector('.messages');
 const joinChatBtn = document.getElementById('join-button');
 const joinChatModal = document.getElementById('join-chatroom');
 const joinChatForm = document.getElementById('join-form');
-const closeJoinBtn = document.querySelector('.close-but');
+const closeJoinBtn = document.getElementById('close-join');
+const closeCreateBtn = document.getElementById('close-create');
+const authModal = document.querySelector('.auth');
 
 let currentRoom = null;
 let currentRoomId = null;
@@ -18,6 +20,8 @@ let joinedRooms = [];
 
 // --- ROOM MANAGEMENT ---
 createChatBtn.addEventListener('click', () => createChatModal.classList.remove('hidden'));
+
+joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
 
 createChatForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -29,14 +33,10 @@ createChatForm.addEventListener('submit', (e) => {
     socket.emit('createRoom', roomData); 
 });
 
-
-// Open Join Modal
-joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
-
 // Close Join Modal
-closeJoinBtn.addEventListener('click', () => {
-  authModal.classList.add('hidden');
-});
+closeJoinBtn.addEventListener('click', () => joinChatModal.classList.add('hidden'));
+
+closeCreateBtn.addEventListener('click', () => createChatModal.classList.add('hidden'));
 
 joinChatModal.addEventListener('click', (e) => {
   if (e.target === authModal) {
