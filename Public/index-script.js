@@ -88,7 +88,7 @@ loginForm.addEventListener('submit', (e) => {
         // SAVE HERE first before moving pages
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         // Then move to the chat page
-        window.location.href = 'this page.html'; 
+        window.location.href = 'This page.html'; 
     } else {
         alert(res.message);
     }
