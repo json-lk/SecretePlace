@@ -19,7 +19,8 @@ let currentRoom = null;
 let currentRoomId = null;
 let joinedRooms = []; 
 
-// --- ROOM MANAGEMENT ---
+// --- ROOM MANAGEMENT ---//
+//---- Listeners--//
 createChatBtn.addEventListener('click', () => createChatModal.classList.remove('hidden'));
 
 joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
@@ -96,21 +97,7 @@ sendmessage.addEventListener('submit', (e) => {
 });
 
 
-// Add this listener somewhere in the file to handle the server's response:
-socket.on('room-created-success', (newRoom) => {
-    addRoomToSidebar(newRoom);
-    openChatRoom(newRoom);
-    document.getElementById('create-chatroom').classList.add('hidden');
-    createChatForm.reset();
-});
-
-socket.on('chatHistory', (history) => {
-    messagesContainer.innerHTML = '';
-    history.forEach(data => {
-        displaySingleMessage(data);
-    }); 
-});
-
+//---Functions---//
 function displaySingleMessage(data) {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     const isMe = data.sender === user?.name;
@@ -125,16 +112,6 @@ function displaySingleMessage(data) {
     messagesContainer.appendChild(msgDiv);
     messagesContainer.scrolltop = messagesContainer.scrollHeight;
 }
-
-// When server sends existing rooms or a new one is created
-socket.on('initRooms', (rooms) => {
-    displayBox.innerHTML = ''; 
-    rooms.forEach(addChatRoomToDisplay);
-});
-
-socket.on('roomCreated', (room) => {
-    addChatRoomToDisplay(room);
-});
 
 function addChatRoomToDisplay(room) {
     const btn = document.createElement('button');
@@ -164,6 +141,58 @@ function openChatRoom(room) {
     }
 }
 
+function addRoomToSidebar(room) {
+    const displayBox = document.getElementById('display-box');
+    
+    // Check if button already exists to prevent duplicates on UI
+    if (document.getElementById(`room-btn-${room.name}`)) return;
+
+    const roomDiv = document.createElement('div');
+    roomDiv.classList.add('chatrum');
+    roomDiv.id = `room-btn-${room.name}`;
+    
+    const roomBtn = document.createElement('button');
+    roomBtn.textContent = room.name;
+    
+    roomBtn.addEventListener('click', () => {
+        openChatRoom(room);
+    });
+
+    roomDiv.appendChild(roomBtn);
+    displayBox.appendChild(roomDiv);
+
+    location.reload(); // Refresh the page to update the sidebar with the new room
+}
+
+//--THE SOCKETS--//
+
+// Add this listener somewhere in the file to handle the server's response:
+socket.on('room-created-success', (newRoom) => {
+    addRoomToSidebar(newRoom);
+    openChatRoom(newRoom);
+    document.getElementById('create-chatroom').classList.add('hidden');
+    createChatForm.reset();
+});
+
+socket.on('chatHistory', (history) => {
+    messagesContainer.innerHTML = '';
+    history.forEach(data => {
+        displaySingleMessage(data);
+    }); 
+});
+
+
+// When server sends existing rooms or a new one is created
+socket.on('initRooms', (rooms) => {
+    displayBox.innerHTML = ''; 
+    rooms.forEach(addChatRoomToDisplay);
+});
+
+socket.on('roomCreated', (room) => {
+    addChatRoomToDisplay(room);
+});
+
+
 
 socket.on('receiveMessage', (data) => {
     console.log("Message received:", data); // Debugging line
@@ -187,12 +216,6 @@ socket.on('receiveMessage', (data) => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 });
 
-// --- JOIN MODAL CONTROLS ---
-
-
-
-// This array tracks ONLY the rooms the current user has joined
-
 
 // Add this listener to handle the verification result:
 socket.on('room-access-result', (response) => {
@@ -207,28 +230,6 @@ socket.on('room-access-result', (response) => {
 });
 
 
-function addRoomToSidebar(room) {
-    const displayBox = document.getElementById('display-box');
-    
-    // Check if button already exists to prevent duplicates on UI
-    if (document.getElementById(`room-btn-${room.name}`)) return;
-
-    const roomDiv = document.createElement('div');
-    roomDiv.classList.add('chatrum');
-    roomDiv.id = `room-btn-${room.name}`;
-    
-    const roomBtn = document.createElement('button');
-    roomBtn.textContent = room.name;
-    
-    roomBtn.addEventListener('click', () => {
-        openChatRoom(room);
-    });
-
-    roomDiv.appendChild(roomBtn);
-    displayBox.appendChild(roomDiv);
-
-    location.reload(); // Refresh the page to update the sidebar with the new room
-}
 
 // Listen for the server telling us a room was deleted
 socket.on('roomDeleted', (roomId) => {
