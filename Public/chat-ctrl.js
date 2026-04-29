@@ -1,3 +1,10 @@
+// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
+const URL = "https://non-e.onrender.com"; 
+const socket = io(URL, {
+    withCredentials: true,
+    transports: ["websocket", "polling"]
+});
+
 const createChatBtn = document.getElementById('create-chat');
 const createChatModal = document.getElementById('create-chatroom');
 const createChatForm = document.getElementById('create-form');
