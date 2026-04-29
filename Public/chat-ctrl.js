@@ -135,13 +135,21 @@ socket.on('receiveMessage', (data) => {
 const joinChatBtn = document.getElementById('join-button');
 const joinChatModal = document.getElementById('join-chatroom');
 const joinChatForm = document.getElementById('join-form');
-const closeJoinBtn = document.getElementById('close-join');
+const closeJoinBtn = document.querySelector('.close-but');
 
 // Open Join Modal
 joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
 
 // Close Join Modal
-closeJoinBtn.addEventListener('click', () => joinChatModal.classList.add('hidden'));
+closeJoinBtn.addEventListener('click', () => {
+  authModal.classList.add('hidden');
+});
+
+joinChatModal.addEventListener('click', (e) => {
+  if (e.target === authModal) {
+    authModal.classList.add('hidden');
+  }
+});
 
 // This array tracks ONLY the rooms the current user has joined
 let joinedRooms = []; 
