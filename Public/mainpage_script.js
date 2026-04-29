@@ -1,3 +1,8 @@
+const URL = "https://non-e.onrender.com"; 
+const socket = io(URL, {
+    withCredentials: true,
+    transports: ["websocket", "polling"]
+});
 const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
