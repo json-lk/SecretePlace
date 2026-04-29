@@ -15,10 +15,10 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100%;
   display: grid;
   place-items: center;
-  padding: 3% 5%;
+  padding: 4rem 2rem;
   font-family: 'Inter', 'Segoe UI', sans-serif;
   background: radial-gradient(circle at top left, rgba(255, 142, 207, 0.45), transparent 35%),
     radial-gradient(circle at bottom right, rgba(110, 193, 255, 0.35), transparent 50%),
@@ -28,7 +28,7 @@ body {
 
 .main {
   background: var(--transback);
-  padding: 4% 8%;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -38,25 +38,25 @@ body {
 .content {
   display: flex;
   align-items: center;
-  gap: 5%;
+  gap: 0.7rem;
 }
 
 .site-name {
   font-size: clamp(2.4rem, 4vw, 3.75rem);
   line-height: 1.05;
   margin: 0;
-  letter-spacing: -0.04rem;
+  letter-spacing: -0.04em;
   color: #3c0f2f;
 }
 
 .navi-buttons {
     display: flex; 
-    gap: 5%; 
+    gap: 1rem; 
 }
 
 .navi-buttons a.button {
-    padding: 2% 3%; 
-    border-radius: 15%; 
+    padding: 0.5rem 1rem; 
+    border-radius: 999px; 
     text-decoration: none; 
     background: linear-gradient(135deg, var(--pink), var(--red)); 
     color: var(--white); 
@@ -70,8 +70,8 @@ body {
 #m-t,
 [m-text] {
   width: min(720px, 100%);
-  padding: 3%rem;
-  border-radius: 20%;
+  padding: 2.5rem;
+  border-radius: 32px;
   background: var(--surface);
   box-shadow: 0 24px 60px rgba(107, 38, 84, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -81,8 +81,8 @@ body {
 h1 {
   font-size: clamp(2.4rem, 4vw, 3.75rem);
   line-height: 1.05;
-  margin: 0 0 10%;
-  letter-spacing: -0.04rem;
+  margin: 0 0 1rem;
+  letter-spacing: -0.04em;
   color: #3c0f2f;
 }
 
