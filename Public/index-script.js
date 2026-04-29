@@ -1,5 +1,9 @@
-// This works because the CDN script adds 'io' to the global window object
-const URL = "https://non-e.onrender.com"; // Put your actual Render URL here
+// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
+const URL = "https://non-e.onrender.com"; 
+const socket = io(URL, {
+    withCredentials: true,
+    transports: ["websocket", "polling"]
+});
 
 // Initialize socket connection with Vercel-compatible settings
 const signupBtn = document.getElementById('signup-btn');
