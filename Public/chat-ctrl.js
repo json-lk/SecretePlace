@@ -1,5 +1,3 @@
-// Note: 'socket' is already defined in the other script, 
-// if loading separately ensure they don't conflict or use the same instance.
 const createChatBtn = document.getElementById('create-chat');
 const createChatModal = document.getElementById('create-chatroom');
 const createChatForm = document.getElementById('create-form');
@@ -12,7 +10,10 @@ const joinChatModal = document.getElementById('join-chatroom');
 const joinChatForm = document.getElementById('join-form');
 const closeJoinBtn = document.getElementById('close-join');
 const closeCreateBtn = document.getElementById('close-create');
-const authModal = document.querySelector('.auth');
+const chatroomExitBtn = document.getElementById('exit');
+const chatroomSettingsBtn = document.getElementById('delroom'); // This is your 🗑 button
+const chatroomUI = document.querySelector('.chatroom');
+
 
 let currentRoom = null;
 let currentRoomId = null;
@@ -59,6 +60,41 @@ joinChatForm.addEventListener('submit', (e) => {
     };
     socket.emit('verify-room', data);
 });
+
+// "Minimize" or Exit the chatroom view
+chatroomExitBtn.addEventListener('click', () => {
+    // This hides the chatroom flexbox
+    chatroomUI.style.display = 'none';
+});
+
+// Settings / Delete button logic
+
+chatroomSettingsBtn.addEventListener('click', () => {
+    if (!currentRoomId) return;
+
+    const confirmDelete = confirm(`Are you sure you want to delete "${currentRoom}"? This will remove it for everyone.`);
+    
+    if (confirmDelete) {
+        socket.emit('deleteRoom', currentRoomId);
+    }
+});
+
+sendmessage.addEventListener('submit', (e) => {
+    e.preventDefault(); 
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    if (!user) return alert("Login to chat!");
+    if (!messageInput.value.trim() || !currentRoom) return;
+
+    const data = {
+        roomName: currentRoom,
+        message: messageInput.value,
+        sender: user.name
+    };
+
+    socket.emit('newMessage', data);
+    messageInput.value = '';
+});
+
 
 // Add this listener somewhere in the file to handle the server's response:
 socket.on('room-created-success', (newRoom) => {
@@ -128,22 +164,6 @@ function openChatRoom(room) {
     }
 }
 
-// --- MESSAGING ---
-sendmessage.addEventListener('submit', (e) => {
-    e.preventDefault(); 
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) return alert("Login to chat!");
-    if (!messageInput.value.trim() || !currentRoom) return;
-
-    const data = {
-        roomName: currentRoom,
-        message: messageInput.value,
-        sender: user.name
-    };
-
-    socket.emit('newMessage', data);
-    messageInput.value = '';
-});
 
 socket.on('receiveMessage', (data) => {
     console.log("Message received:", data); // Debugging line
@@ -209,31 +229,6 @@ function addRoomToSidebar(room) {
 
     location.reload(); // Refresh the page to update the sidebar with the new room
 }
-
-
-
-// --- CHATROOM WINDOW CONTROLS ---
-const chatroomExitBtn = document.getElementById('exit');
-const chatroomSettingsBtn = document.getElementById('delroom'); // This is your 🗑 button
-const chatroomUI = document.querySelector('.chatroom');
-
-// "Minimize" or Exit the chatroom view
-chatroomExitBtn.addEventListener('click', () => {
-    // This hides the chatroom flexbox
-    chatroomUI.style.display = 'none';
-});
-
-// Settings / Delete button logic
-
-chatroomSettingsBtn.addEventListener('click', () => {
-    if (!currentRoomId) return;
-
-    const confirmDelete = confirm(`Are you sure you want to delete "${currentRoom}"? This will remove it for everyone.`);
-    
-    if (confirmDelete) {
-        socket.emit('deleteRoom', currentRoomId);
-    }
-});
 
 // Listen for the server telling us a room was deleted
 socket.on('roomDeleted', (roomId) => {
