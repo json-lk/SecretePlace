@@ -23,8 +23,6 @@ const io = socketIo(server, {
     }
 });
 
-app.set('trust proxy', 1); 
-
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
@@ -36,19 +34,6 @@ const sessionMiddleware = session({
         maxAge: 100 * 365 * 24 * 60 * 60 * 1000 
     }
 });
-
-app.use(sessionMiddleware);
-app.use(express.static(path.join(__dirname, 'Public')));
-
-// BRIDGE: Share the session with Socket.io
-io.use(sharedsession(sessionMiddleware, {
-    autoSave: true
-}));
-
-// --- 2. DATA MANAGEMENT ---
-let users = [];
-let chatRooms = [];
-let messages = [];
 
 const loadData = () => {
     try {
@@ -78,6 +63,20 @@ const getVisibleRooms = (user) => {
     // regardless of message activity.
     return chatRooms.filter(r => r.owner === user.email || joinedRoomNames.includes(r.name));
 };
+
+app.set('trust proxy', 1); 
+app.use(sessionMiddleware);
+app.use(express.static(path.join(__dirname, 'Public')));
+
+// BRIDGE: Share the session with Socket.io
+let users = [];
+let chatRooms = [];
+let messages = [];
+
+io.use(sharedsession(sessionMiddleware, {
+    autoSave: true
+}));
+
 
 // --- 3. SOCKET LOGIC ---
 io.on('connection', (socket) => {
