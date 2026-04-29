@@ -7,9 +7,14 @@ const displayBox = document.getElementById('display-box');
 const messageInput = document.getElementById('messages-input');
 const sendmessage = document.getElementById('message-form');
 const messagesContainer = document.querySelector('.messages');
+const joinChatBtn = document.getElementById('join-button');
+const joinChatModal = document.getElementById('join-chatroom');
+const joinChatForm = document.getElementById('join-form');
+const closeJoinBtn = document.querySelector('.close-but');
 
 let currentRoom = null;
 let currentRoomId = null;
+let joinedRooms = []; 
 
 // --- ROOM MANAGEMENT ---
 createChatBtn.addEventListener('click', () => createChatModal.classList.remove('hidden'));
@@ -22,6 +27,31 @@ createChatForm.addEventListener('submit', (e) => {
         id: document.getElementById('chat-id').value
     };
     socket.emit('createRoom', roomData); 
+});
+
+
+// Open Join Modal
+joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
+
+// Close Join Modal
+closeJoinBtn.addEventListener('click', () => {
+  authModal.classList.add('hidden');
+});
+
+joinChatModal.addEventListener('click', (e) => {
+  if (e.target === authModal) {
+    authModal.classList.add('hidden');
+  }
+});
+
+// Search for your join-form submit listener:
+joinChatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = {
+        name: joinChatForm.querySelector('#chat-name').value,
+        pass: joinChatForm.querySelector('#chat-password').value
+    };
+    socket.emit('verify-room', data);
 });
 
 // Add this listener somewhere in the file to handle the server's response:
@@ -132,37 +162,11 @@ socket.on('receiveMessage', (data) => {
 });
 
 // --- JOIN MODAL CONTROLS ---
-const joinChatBtn = document.getElementById('join-button');
-const joinChatModal = document.getElementById('join-chatroom');
-const joinChatForm = document.getElementById('join-form');
-const closeJoinBtn = document.querySelector('.close-but');
 
-// Open Join Modal
-joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
 
-// Close Join Modal
-closeJoinBtn.addEventListener('click', () => {
-  authModal.classList.add('hidden');
-});
-
-joinChatModal.addEventListener('click', (e) => {
-  if (e.target === authModal) {
-    authModal.classList.add('hidden');
-  }
-});
 
 // This array tracks ONLY the rooms the current user has joined
-let joinedRooms = []; 
 
-// Search for your join-form submit listener:
-joinChatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const data = {
-        name: joinChatForm.querySelector('#chat-name').value,
-        pass: joinChatForm.querySelector('#chat-password').value
-    };
-    socket.emit('verify-room', data);
-});
 
 // Add this listener to handle the verification result:
 socket.on('room-access-result', (response) => {
