@@ -3,6 +3,7 @@ const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
 const accountDropdown = document.getElementById('account-dropdown');
 const editProfileModal = document.getElementById('edit-profile-modal');
+const switchFormButtons = document.querySelectorAll('.switch-process');
 
 
 // --- THEME LOGIC ---
@@ -13,19 +14,6 @@ toggleButton.addEventListener('click', () => {
     toggleButton.innerHTML = isDarkMode ? '🌞' : '🌙';
 });
 
-// --- UI HELPERS ---
-function updateAccountButton() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-        accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
-        accountButton.style.backgroundColor = '#4f46e5';
-    } else {
-        accountButton.textContent = '👤';
-        accountButton.style.backgroundColor = '#e2e8f0';
-    }
-}
-
-// --- AUTH ACTIONS ---
 document.getElementById('logins').addEventListener('submit', (e) => {
     e.preventDefault();
     const email = e.target.querySelector('input[type="email"]').value;
@@ -33,44 +21,6 @@ document.getElementById('logins').addEventListener('submit', (e) => {
     socket.emit('login', { email, password });
 });
 
-
-socket.on('sessionRestore', (data) => {
-    if (data.user) {
-        localStorage.setItem('curerentUser', JSON.stringify(data.user));
-        authModal.classList.add('hidden');
-        updateAccountButton();
-    }
-});
-
-// 1. Move the listener OUTSIDE the submit event to prevent duplicate alerts
-socket.on('signupResponse', (response) => {
-    if (response.success) {
-        // 2. Save the user data so the messaging functions can access it
-        const userData = {
-            name: response.user.name,
-            email: response.user.email
-        };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-
-        // 3. UI Update: Close the signup modal/form immediately
-        // Assuming 'signups' is the form and you have a modal or container to hide
-        document.getElementById('signups').classList.remove('active');
-        
-        // If you have a main wrapper for the login/signup UI, hide it:
-        const authModal = document.getElementById('auth-modal'); // Change to your actual ID
-        if (authModal) authModal.classList.add('hidden');
-
-        alert(`Welcome, ${response.user.name}! You are now logged in.`);
-        
-        // 4. Optional: Refresh the room list or join a default room
-        // socket.emit('getRooms'); 
-        
-    } else {
-        alert(response.message);
-    }
-});
-
-// 5. Submit Logic
 document.getElementById('signups').addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -81,48 +31,6 @@ document.getElementById('signups').addEventListener('submit', (e) => {
     socket.emit('signup', { name, email, password });
 });
 
-// --- SERVER RESPONSES ---
-socket.on('loginResponse', (res) => {
-    if (res.success) {
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        authModal.classList.add('hidden');
-        updateAccountButton();
-    } else {
-        alert(res.message);
-    }
-});
-
-socket.on('signupResponse', (res) => {
-    if (res.success) {
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        authModal.classList.add('hidden');
-        updateAccountButton();
-    } else {
-        alert(res.message);
-    }
-});
-
-// --- PROFILE EDIT & DELETE ---
-document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    socket.emit('updateProfile', {
-        oldEmail: currentUser.email,
-        newName: document.getElementById('edit-name').value,
-        newEmail: document.getElementById('edit-email').value,
-        newPassword: document.getElementById('edit-password').value
-    });
-});
-
-socket.on('updateProfileResponse', (res) => {
-    if (res.success) {
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        alert("Profile Updated!");
-        editProfileModal.classList.add('hidden');
-        updateAccountButton();
-    }
-});
-
 document.getElementById('delusr').addEventListener('click', (e) => {
     e.preventDefault();
     if (confirm("Delete account permanently?")) {
@@ -131,12 +39,7 @@ document.getElementById('delusr').addEventListener('click', (e) => {
     }
 });
 
-socket.on('deleteResponse', () => {
-    localStorage.removeItem('currentUser');
-    location.reload();
-});
 
-// Dropdown Toggles
 accountButton.addEventListener('click', (e) => {
     e.stopPropagation();
     const user = localStorage.getItem('currentUser');
@@ -148,16 +51,17 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     socket.emit('logout');
 });
 
-socket.on('logoutConfirm', () => {
-    localStorage.removeItem('currentUser')
-    window.location.href ='index.html';
-})
+document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    socket.emit('updateProfile', {
+        oldEmail: currentUser.email,
+        newName: document.getElementById('edit-name').value,
+        newEmail: document.getElementById('edit-email').value,
+        newPassword: document.getElementById('edit-password').value
+    });
+});
 
-updateAccountButton();
-
-
-// Switch between Login and Signup forms
-const switchFormButtons = document.querySelectorAll('.switch-process');
 switchFormButtons.forEach(button => {
     button.addEventListener('click', (e) => {
         e.preventDefault();
@@ -194,3 +98,89 @@ document.addEventListener('click', (e) => {
         accountDropdown.classList.add('hidden');
     }
 });
+
+// --- UI HELPERS ---
+function updateAccountButton() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
+        accountButton.style.backgroundColor = '#4f46e5';
+    } else {
+        accountButton.textContent = '👤';
+        accountButton.style.backgroundColor = '#e2e8f0';
+    }
+}
+
+// --- AUTH ACTIONS ---
+socket.on('sessionRestore', (data) => {
+    if (data.user) {
+        localStorage.setItem('curerentUser', JSON.stringify(data.user));
+        authModal.classList.add('hidden');
+        updateAccountButton();
+    }
+});
+
+// 1. Move the listener OUTSIDE the submit event to prevent duplicate alerts
+socket.on('signupResponse', (response) => {
+    if (response.success) {
+        // 2. Save the user data so the messaging functions can access it
+        const userData = {
+            name: response.user.name,
+            email: response.user.email
+        };
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        document.getElementById('signups').classList.remove('active');
+        
+        // If you have a main wrapper for the login/signup UI, hide it:
+        const authModal = document.getElementById('auth-modal'); // Change to your actual ID
+        if (authModal) authModal.classList.add('hidden');
+
+        alert(`Welcome, ${response.user.name}! You are now logged in.`);
+        
+         socket.emit('getRooms'); 
+        
+    } else {
+        alert(response.message);
+    }
+});
+
+socket.on('loginResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        authModal.classList.add('hidden');
+        updateAccountButton();
+    } else {
+        alert(res.message);
+    }
+});
+
+socket.on('signupResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        authModal.classList.add('hidden');
+        updateAccountButton();
+    } else {
+        alert(res.message);
+    }
+});
+
+socket.on('updateProfileResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        alert("Profile Updated!");
+        editProfileModal.classList.add('hidden');
+        updateAccountButton();
+    }
+});
+
+socket.on('deleteResponse', () => {
+    localStorage.removeItem('currentUser');
+    location.reload();
+});
+
+socket.on('logoutConfirm', () => {
+    localStorage.removeItem('currentUser')
+    window.location.href ='index.html';
+})
+
