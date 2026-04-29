@@ -2,14 +2,6 @@
 const URL = "https://non-e.onrender.com"; // Put your actual Render URL here
 
 // Initialize socket connection with Vercel-compatible settings
-export const socket = io(URL, {
-  transports: ["websocket", "polling"],
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  reconnectionAttempts: 5
-});
-
 const signupBtn = document.getElementById('signup-btn');
 const loginBtn = document.getElementById('login-btn');
 const authModal = document.getElementById('auth');
@@ -68,7 +60,7 @@ socket.on('signupResponse', (response) => {
         alert("Welcome, " + response.user.name + "! Logging you in...");
         
         // Redirect to the chat page
-        window.location.href = '/This page.html'; 
+        window.location.href = 'This page.html'; 
     } else {
         alert("Signup failed: " + response.message);
     }
@@ -91,15 +83,14 @@ loginForm.addEventListener('submit', (e) => {
   const password = loginForm.querySelector('input[type="password"]').value;
 
   socket.emit('login', { email, password });
-}); // Close the event listener here
-
-// Move the socket.on('loginResponse') listener outside the submit handler
-socket.on('loginResponse', (res) => {
+  socket.on('loginResponse', (res) => {
     if (res.success) {
+        // SAVE HERE first before moving pages
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         // Then move to the chat page
-        window.location.href = '/This page.html'; 
+        window.location.href = 'this page.html'; 
     } else {
         alert(res.message);
     }
+});
 });
