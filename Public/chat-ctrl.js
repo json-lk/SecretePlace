@@ -39,8 +39,14 @@ closeJoinBtn.addEventListener('click', () => joinChatModal.classList.add('hidden
 closeCreateBtn.addEventListener('click', () => createChatModal.classList.add('hidden'));
 
 joinChatModal.addEventListener('click', (e) => {
-  if (e.target === authModal) {
-    authModal.classList.add('hidden');
+  if (e.target === joinChatModal) {
+    joinChatModal.classList.add('hidden');
+  }
+});
+
+createChatModal.addEventListener('click', (e) => {
+  if (e.target === createChatModal) {
+    createChatModal.classList.add('hidden');
   }
 });
 
