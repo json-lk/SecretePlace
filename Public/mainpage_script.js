@@ -1,31 +1,9 @@
 const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
-const accountButton = document.getElementId('account-button');
+const accountButton = document.querySelector('.account-button');
 const accountDropdown = document.getElementById('account-dropdown');
 const editProfileModal = document.getElementById('edit-profile-modal');
 
-
-function updateAccountButton() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-    accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
-    accountButton.style.backgroundColor = '#4f46e5';
-    } else {
-    accountButton.textContent = '👤';
-    accountButton.style.backgroundColor = '#e2e8f0';
-    }
-}
-
-
-// Run this when the script loads
-window.onload = () => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        // Hide auth modal immediately if we have a saved user
-        authModal.classList.add('hidden');
-        updateAccountButton();
-    }
-};
 
 // --- THEME LOGIC ---
 let isDarkMode = false;
@@ -36,6 +14,16 @@ toggleButton.addEventListener('click', () => {
 });
 
 // --- UI HELPERS ---
+function updateAccountButton() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
+        accountButton.style.backgroundColor = '#4f46e5';
+    } else {
+        accountButton.textContent = '👤';
+        accountButton.style.backgroundColor = '#e2e8f0';
+    }
+}
 
 // --- AUTH ACTIONS ---
 document.getElementById('logins').addEventListener('submit', (e) => {
@@ -45,24 +33,47 @@ document.getElementById('logins').addEventListener('submit', (e) => {
     socket.emit('login', { email, password });
 });
 
+
 socket.on('sessionRestore', (data) => {
     if (data.user) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        localStorage.setItem('curerentUser', JSON.stringify(data.user));
         authModal.classList.add('hidden');
         updateAccountButton();
-        // Trigger a room refresh since we are now confirmed logged in
-        socket.emit('getRooms'); 
+    }
+});
+
+// 1. Move the listener OUTSIDE the submit event to prevent duplicate alerts
+socket.on('signupResponse', (response) => {
+    if (response.success) {
+        // 2. Save the user data so the messaging functions can access it
+        const userData = {
+            name: response.user.name,
+            email: response.user.email
+        };
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        // 3. UI Update: Close the signup modal/form immediately
+        // Assuming 'signups' is the form and you have a modal or container to hide
+        document.getElementById('signups').classList.remove('active');
+        
+        // If you have a main wrapper for the login/signup UI, hide it:
+        const authModal = document.getElementById('auth-modal'); // Change to your actual ID
+        if (authModal) authModal.classList.add('hidden');
+
+        alert(`Welcome, ${response.user.name}! You are now logged in.`);
+        
+        // 4. Optional: Refresh the room list or join a default room
+        // socket.emit('getRooms'); 
+        
     } else {
-        // If server says no session, clear local storage
-        localStorage.removeItem('currentUser');
-        authModal.classList.remove('hidden');
+        alert(response.message);
     }
 });
 
 // 5. Submit Logic
 document.getElementById('signups').addEventListener('submit', (e) => {
     e.preventDefault();
-
+    
     const name = e.target.querySelector('input[type="text"]').value;
     const email = e.target.querySelector('input[type="email"]').value;
     const password = e.target.querySelectorAll('input[type="password"]')[0].value;
@@ -70,6 +81,26 @@ document.getElementById('signups').addEventListener('submit', (e) => {
     socket.emit('signup', { name, email, password });
 });
 
+// --- SERVER RESPONSES ---
+socket.on('loginResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        authModal.classList.add('hidden');
+        updateAccountButton();
+    } else {
+        alert(res.message);
+    }
+});
+
+socket.on('signupResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        authModal.classList.add('hidden');
+        updateAccountButton();
+    } else {
+        alert(res.message);
+    }
+});
 
 // --- PROFILE EDIT & DELETE ---
 document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
@@ -94,10 +125,9 @@ socket.on('updateProfileResponse', (res) => {
 
 document.getElementById('delusr').addEventListener('click', (e) => {
     e.preventDefault();
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const password = prompt("Enter your password to confirm account deletion:");
-    if (password && confirm("Delete account permanently?")) {
-        socket.emit('deleteAccount', { password: password });
+    if (confirm("Delete account permanently?")) {
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        socket.emit('deleteAccount', user.email);
     }
 });
 
@@ -107,19 +137,11 @@ socket.on('deleteResponse', () => {
 });
 
 // Dropdown Toggles
-// Dropdown Toggles
 accountButton.addEventListener('click', (e) => {
     e.stopPropagation();
     const user = localStorage.getItem('currentUser');
-    
-    if (!user) {
-        // If no user, show the Login/Signup modal
-        authModal.classList.remove('hidden');
-        accountDropdown.classList.add('hidden'); // Ensure dropdown is closed
-    } else {
-        // If user exists, toggle the menu that has Edit and Logout
-        accountDropdown.classList.toggle('hidden');
-    }
+    if (!user) authModal.classList.remove('hidden');
+    else accountDropdown.classList.toggle('hidden');
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => {
@@ -148,10 +170,10 @@ switchFormButtons.forEach(button => {
 // Close buttons for ALL modals
 document.querySelectorAll('.close-but').forEach(btn => {
     btn.addEventListener('click', () => {
-    authModal.classList.add('hidden');
+        authModal.classList.add('hidden');
         editProfileModal.classList.add('hidden');
         document.getElementById('create-chatroom').classList.add('hidden');
-         document.getElementById('join-chatroom').classList.add('hidden');
+        document.getElementById('join-chatroom').classList.add('hidden');
     });
 });
 
