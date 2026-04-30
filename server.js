@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
             return socket.emit('errorMsg', 'Login required before creating a room.');
         }
 
-        const roomId = roomData.id && roomData.id.trim() !== "" ? roomData.id : uuidv4(); // Use UUID for robust IDs
+        const roomId = (roomData.id && roomData.id.trim()) ? roomData.id : uuidv4(); // Use UUID for robust IDs
 
         if (chatRooms.find(r => r.id === roomId || r.name === roomData.name)) {
             return socket.emit('errorMsg', 'Room name or ID already exists!');
