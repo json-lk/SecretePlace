@@ -54,7 +54,9 @@ const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI 
+    }),
     cookie: { 
         secure: NODE_ENV === 'production',
         httpOnly: true,
