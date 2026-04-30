@@ -23,6 +23,10 @@ const io = socketIo(server, {
     }
 });
 
+let users = [];
+let chatRooms = [];
+let messages = [];
+
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
@@ -67,11 +71,6 @@ const getVisibleRooms = (user) => {
 app.set('trust proxy', 1); 
 app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, 'Public')));
-
-// BRIDGE: Share the session with Socket.io
-let users = [];
-let chatRooms = [];
-let messages = [];
 
 io.use(sharedsession(sessionMiddleware, {
     autoSave: true
