@@ -55,15 +55,13 @@ signupForm.addEventListener('submit', (e) => {
     socket.emit('signup', { name, email, password });
 });
 
-socket.on('signupResponse', (response) => {
-    if (response.success) {
-        // MongoDB users have a unique ._id property
-        localStorage.setItem('currentUser', JSON.stringify(response.user));
-        alert(`Account created! Welcome, ${response.user.name}`);
-        window.location.href = 'This page.html'; 
-    } else {
-        alert("Signup Error: " + response.message);
-    }
+switchForms.forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = btn.getAttribute('data-target');
+    document.querySelectorAll('.authin').forEach(form => form.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+  });
 });
 
 // Login
@@ -73,6 +71,17 @@ loginForm.addEventListener('submit', (e) => {
     const password = loginForm.querySelector('input[type="password"]').value;
 
     socket.emit('login', { email, password });
+});
+
+socket.on('signupResponse', (response) => {
+    if (response.success) {
+        // MongoDB users have a unique ._id property
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        alert(`Account created! Welcome, ${response.user.name}`);
+        window.location.href = 'This page.html'; 
+    } else {
+        alert("Signup Error: " + response.message);
+    }
 });
 
 socket.on('loginResponse', (res) => {
