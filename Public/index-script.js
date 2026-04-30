@@ -87,14 +87,16 @@ loginForm.addEventListener('submit', (e) => {
   const password = loginForm.querySelector('input[type="password"]').value;
 
   socket.emit('login', { email, password });
-  socket.on('loginResponse', (res) => {
-    if (res.success) {
-        // SAVE HERE first before moving pages
-        localStorage.setItem('currentUser', JSON.stringify(res.user));
-        // Then move to the chat page
-        window.location.href = 'This page.html'; 
-    } else {
-        alert(res.message);
-    }
 });
+
+socket.on('loginResponse', (res) => {
+  if (res.success) {
+      // SAVE HERE first before moving pages
+      localStorage.setItem('currentUser', JSON.stringify(res.user));
+      // Then move to the chat page
+      window.location.href = 'This page.html'; 
+  } else {
+      alert(res.message);
+  }
 });
+
