@@ -50,9 +50,15 @@ const loadData = () => {
 };
 loadData();
 
+// Change your saveData function to this:
 const saveData = (file, data) => {
-    fs.writeFile(file, JSON.stringify(data, null, 2), (err) => {
-        if (err) console.error(`Error saving ${file}:`, err);
+    const filePath = path.join(__dirname, file); // Ensures absolute path
+    fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
+        if (err) {
+            console.error(`CRITICAL: Error saving ${file}:`, err);
+        } else {
+            console.log(`SUCCESS: Saved ${file} to ${filePath}`);
+        }
     });
 };
 
