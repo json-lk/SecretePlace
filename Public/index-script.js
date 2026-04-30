@@ -1,11 +1,11 @@
-// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
+// 1. Initialize Socket
 const URL = "https://non-e.onrender.com"; 
 const socket = io(URL, {
     withCredentials: true,
     transports: ["websocket", "polling"]
 });
 
-// Initialize socket connection with Vercel-compatible settings
+// --- SELECTORS ---
 const signupBtn = document.getElementById('signup-btn');
 const loginBtn = document.getElementById('login-btn');
 const authModal = document.getElementById('auth');
@@ -14,62 +14,39 @@ const loginForm = document.getElementById('logins');
 const signupForm = document.getElementById('signups');
 const switchForms = document.querySelectorAll('.switch-process');
 
-signupBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  authModal.classList.remove('hidden');
-  loginForm.classList.remove('hidden');
-  signupForm.classList.add('active');
-});
-
-loginBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  authModal.classList.remove('hidden');
-  loginForm.classList.add('active');
-  signupForm.classList.remove('active');
-});
-
-closeBut.addEventListener('click', () => {
-  authModal.classList.add('hidden');
-});
-
-authModal.addEventListener('click', (e) => {
-  if (e.target === authModal) {
-    authModal.classList.add('hidden');
-  }
-});
-
-switchForms.forEach((btn) => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const target = btn.getAttribute('data-target');
-    document.querySelectorAll('.authin').forEach(form => form.classList.remove('active'));
-    document.getElementById(target).classList.add('active');
-  });
-});
-
-// Handle signup form submission
-// Keep the listener outside the submit block to avoid memory leaks
-socket.on('signupResponse', (response) => {
-    if (response.success) {
-        // --- THE "AUTO-LOGIN" MAGIC ---
-        // We save the user data returned from the server into localStorage
-        // This makes the user 'persist' across page refreshes and redirects
-        const userData = {
-            name: response.user.name,
-            email: response.user.email
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-
-        alert("Welcome, " + response.user.name + "! Logging you in...");
-        
-        // Redirect to the chat page
-        window.location.href = 'This page.html'; 
-    } else {
-        alert("Signup failed: " + response.message);
+// --- SESSION RESTORATION (The MongoDB Power) ---
+// When the page loads, the server checks the MongoDB session cookie.
+// If valid, it emits 'sessionRestore' automatically.
+socket.on('sessionRestore', (data) => {
+    if (data.user) {
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        // If they are on the landing page, send them to the chat
+        if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+            window.location.href = 'This page.html'; 
+        }
     }
 });
 
+// --- UI LOGIC ---
+signupBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    authModal.classList.remove('hidden');
+    loginForm.classList.remove('active'); // Use 'active' to match your CSS classes
+    signupForm.classList.add('active');
+});
+
+loginBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    authModal.classList.remove('hidden');
+    loginForm.classList.add('active');
+    signupForm.classList.remove('active');
+});
+
+closeBut.addEventListener('click', () => authModal.classList.add('hidden'));
+
+// --- AUTH ACTIONS ---
+
+// Signup
 signupForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = signupForm.querySelector('input[type="text"]').value;
@@ -79,24 +56,40 @@ signupForm.addEventListener('submit', (e) => {
     socket.emit('signup', { name, email, password });
 });
 
-// Handle login form submission
+socket.on('signupResponse', (response) => {
+    if (response.success) {
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        alert(`Welcome, ${response.user.name}!`);
+        window.location.href = 'This page.html'; 
+    } else {
+        alert("Signup failed: " + response.message);
+    }
+});
+
+// Login
 loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    const email = loginForm.querySelector('input[type="email"]').value;
+    const password = loginForm.querySelector('input[type="password"]').value;
 
-  const email = loginForm.querySelector('input[type="email"]').value;
-  const password = loginForm.querySelector('input[type="password"]').value;
-
-  socket.emit('login', { email, password });
+    socket.emit('login', { email, password });
 });
 
 socket.on('loginResponse', (res) => {
-  if (res.success) {
-      // SAVE HERE first before moving pages
-      localStorage.setItem('currentUser', JSON.stringify(res.user));
-      // Then move to the chat page
-      window.location.href = 'This page.html'; 
-  } else {
-      alert(res.message);
-  }
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        window.location.href = 'This page.html'; 
+    } else {
+        alert(res.message);
+    }
 });
 
+// Logout (Add this to your logout button in the UI)
+function handleLogout() {
+    socket.emit('logout');
+}
+
+socket.on('logoutConfirm', () => {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
+});
