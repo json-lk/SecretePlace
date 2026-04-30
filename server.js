@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const MongoStore = require('connect-mongo');
 const socketIo = require('socket.io');
 const path = require('path');
 const session = require('express-session');
@@ -8,7 +9,6 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const sharedsession = require("express-socket.io-session");
 const mongoose = require('mongoose');
-const MongoStore = require('connect-mongo');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,11 +16,20 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // 1. Database Connection - Targeting "Non_e"
-// Ensure your MONGO_URI in Render ends with /Non_e?retryWrites=true...
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ Connected to MongoDB Atlas: Non_e Database"))
-    .catch(err => console.error("❌ Database connection error:", err));
+// 1. Database Connection
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("✅ Connected to MongoDB Atlas: Non_e Database");
+    } catch (err) {
+        console.error("❌ CRITICAL: Database connection failed!");
+        console.error(err.message);
+        // Instead of crashing the whole server, we log it.
+        // Or, if you want it to stop, use process.exit(1);
+    }
+};
 
+connectDB();
 // 2. Database Models (These will automatically create collections in Non_e)
 const User = mongoose.model('User', new mongoose.Schema({
     name: String,
