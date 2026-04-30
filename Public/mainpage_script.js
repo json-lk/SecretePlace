@@ -116,6 +116,8 @@ function updateAccountButton() {
     }
 }
 
+updateAccountButton()
+
 // --- AUTH ACTIONS ---
 socket.on('sessionRestore', (data) => {
     if (data.user) {
