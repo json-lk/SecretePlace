@@ -1,58 +1,41 @@
-// 1. Initialize Socket
+// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
 const URL = "https://non-e.onrender.com"; 
 const socket = io(URL, {
-    withCredentials: true, // Crucial for sending MongoDB session cookies
+    withCredentials: true,
     transports: ["websocket", "polling"]
 });
 
-// --- SELECTORS ---
+// Initialize socket connection with Vercel-compatible settings
 const signupBtn = document.getElementById('signup-btn');
 const loginBtn = document.getElementById('login-btn');
 const authModal = document.getElementById('auth');
 const closeBut = document.querySelector('.close-but');
 const loginForm = document.getElementById('logins');
 const signupForm = document.getElementById('signups');
+const switchForms = document.querySelectorAll('.switch-process');
 
-// --- SESSION RESTORATION ---
-// Triggered if the server finds a valid session ID in its MongoDB store
-socket.on('sessionRestore', (data) => {
-    if (data.user) {
-        // MongoDB returns '_id', we store the whole object for frontend use
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        
-        const path = window.location.pathname;
-        if (path.includes('index.html') || path === '/') {
-            window.location.href = 'This page.html'; 
-        }
-    }
+signupBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  authModal.classList.remove('hidden');
+  loginForm.classList.remove('hidden');
+  signupForm.classList.add('active');
 });
 
-// --- UI LOGIC ---
-const toggleModal = (show, isLogin = true) => {
-    authModal.classList.toggle('hidden', !show);
-    if (show) {
-        loginForm.classList.toggle('active', isLogin);
-        signupForm.classList.toggle('active', !isLogin);
-    }
-};
+loginBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  authModal.classList.remove('hidden');
+  loginForm.classList.add('active');
+  signupForm.classList.remove('active');
+});
 
-signupBtn?.addEventListener('click', (e) => { e.preventDefault(); toggleModal(true, false); });
-loginBtn?.addEventListener('click', (e) => { e.preventDefault(); toggleModal(true, true); });
-closeBut?.addEventListener('click', () => toggleModal(false));
+closeBut.addEventListener('click', () => {
+  authModal.classList.add('hidden');
+});
 
-// --- AUTH ACTIONS ---
-
-// Signup
-signupForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = signupForm.querySelector('input[type="text"]').value;
-    const email = signupForm.querySelector('input[type="email"]').value;
-    const password = signupForm.querySelectorAll('input[type="password"]')[0].value;
-    
-    // Ensure we aren't sending empty strings to MongoDB
-    if(!name || !email || !password) return alert("Please fill all fields");
-
-    socket.emit('signup', { name, email, password });
+authModal.addEventListener('click', (e) => {
+  if (e.target === authModal) {
+    authModal.classList.add('hidden');
+  }
 });
 
 switchForms.forEach((btn) => {
@@ -64,42 +47,54 @@ switchForms.forEach((btn) => {
   });
 });
 
-// Login
-loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = loginForm.querySelector('input[type="email"]').value;
-    const password = loginForm.querySelector('input[type="password"]').value;
-
-    socket.emit('login', { email, password });
-});
-
+// Handle signup form submission
+// Keep the listener outside the submit block to avoid memory leaks
 socket.on('signupResponse', (response) => {
     if (response.success) {
-        // MongoDB users have a unique ._id property
-        localStorage.setItem('currentUser', JSON.stringify(response.user));
-        alert(`Account created! Welcome, ${response.user.name}`);
+        // --- THE "AUTO-LOGIN" MAGIC ---
+        // We save the user data returned from the server into localStorage
+        // This makes the user 'persist' across page refreshes and redirects
+        const userData = {
+            name: response.user.name,
+            email: response.user.email
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        alert("Welcome, " + response.user.name + "! Logging you in...");
+        
+        // Redirect to the chat page
         window.location.href = 'This page.html'; 
     } else {
-        alert("Signup Error: " + response.message);
+        alert("Signup failed: " + response.message);
     }
 });
 
-socket.on('loginResponse', (res) => {
+signupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = signupForm.querySelector('input[type="text"]').value;
+    const email = signupForm.querySelector('input[type="email"]').value;
+    const password = signupForm.querySelectorAll('input[type="password"]')[0].value;
+    
+    socket.emit('signup', { name, email, password });
+});
+
+// Handle login form submission
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const email = loginForm.querySelector('input[type="email"]').value;
+  const password = loginForm.querySelector('input[type="password"]').value;
+
+  socket.emit('login', { email, password });
+  socket.on('loginResponse', (res) => {
     if (res.success) {
+        // SAVE HERE first before moving pages
         localStorage.setItem('currentUser', JSON.stringify(res.user));
+        // Then move to the chat page
         window.location.href = 'This page.html'; 
     } else {
-        // Common MongoDB/Auth error: "User not found" or "Invalid credentials"
         alert(res.message);
     }
 });
-
-// Logout
-function handleLogout() {
-    socket.emit('logout');
-}
-
-socket.on('logoutConfirm', () => {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'index.html';
 });
