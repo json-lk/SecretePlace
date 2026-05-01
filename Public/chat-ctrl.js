@@ -1,10 +1,11 @@
-// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
+// 1. Initialize Socket correctly for Cross-Origin
 const URL = "https://non-e.onrender.com"; 
 const socket = io(URL, {
     withCredentials: true,
     transports: ["websocket", "polling"]
 });
 
+// --- SELECTORS ---
 const createChatBtn = document.getElementById('create-chat');
 const createChatModal = document.getElementById('create-chatroom');
 const createChatForm = document.getElementById('create-form');
@@ -18,93 +19,77 @@ const joinChatForm = document.getElementById('join-form');
 const closeJoinBtn = document.getElementById('close-join');
 const closeCreateBtn = document.getElementById('close-create');
 const chatroomExitBtn = document.getElementById('exit');
-const chatroomSettingsBtn = document.getElementById('delroom'); // This is your 🗑 button
+const chatroomSettingsBtn = document.getElementById('delroom');
 const chatroomUI = document.querySelector('.chatroom');
-
 
 let currentRoom = null;
 let currentRoomId = null;
-let joinedRooms = []; 
 
-// --- ROOM MANAGEMENT ---//
-//---- Listeners--//
+// --- ROOM MANAGEMENT ---
+
 createChatBtn.addEventListener('click', () => createChatModal.classList.remove('hidden'));
-
 joinChatBtn.addEventListener('click', () => joinChatModal.classList.remove('hidden'));
+closeJoinBtn.addEventListener('click', () => joinChatModal.classList.add('hidden'));
+closeCreateBtn.addEventListener('click', () => createChatModal.classList.add('hidden'));
 
+// Close modals when clicking outside
+[joinChatModal, createChatModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+    });
+});
+
+// Create Room Action
 createChatForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const roomData = {
         name: document.getElementById('chat-name').value,
         password: document.getElementById('chat-password').value,
-        id: document.getElementById('chat-id').value
+        id: document.getElementById('chat-id').value || Math.random().toString(36).substring(7)
     };
     socket.emit('createRoom', roomData); 
 });
 
-// Close Join Modal
-closeJoinBtn.addEventListener('click', () => joinChatModal.classList.add('hidden'));
-
-closeCreateBtn.addEventListener('click', () => createChatModal.classList.add('hidden'));
-
-joinChatModal.addEventListener('click', (e) => {
-  if (e.target === joinChatModal) {
-    joinChatModal.classList.add('hidden');
-  }
-});
-
-createChatModal.addEventListener('click', (e) => {
-  if (e.target === createChatModal) {
-    createChatModal.classList.add('hidden');
-  }
-});
-
-// Search for your join-form submit listener:
+// Join/Verify Room Action
 joinChatForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const data = {
         name: joinChatForm.querySelector('#chat-name').value,
-        pass: joinChatForm.querySelector('#chat-password').value
+        password: joinChatForm.querySelector('#chat-password').value // Fixed key name to match server
     };
     socket.emit('verify-room', data);
 });
 
-// "Minimize" or Exit the chatroom view
 chatroomExitBtn.addEventListener('click', () => {
-    // This hides the chatroom flexbox
     chatroomUI.style.display = 'none';
+    currentRoom = null;
 });
 
-// Settings / Delete button logic
-
+// Delete Room Action
 chatroomSettingsBtn.addEventListener('click', () => {
     if (!currentRoomId) return;
-
-    const confirmDelete = confirm(`Are you sure you want to delete "${currentRoom}"? This will remove it for everyone.`);
-    
-    if (confirmDelete) {
-        socket.emit('deleteRoom', currentRoomId);
+    if (confirm(`Are you sure you want to delete "${currentRoom}"?`)) {
+        socket.emit('deleteRoom', { roomId: currentRoomId }); // Send as object to match server listener
     }
 });
+
+// --- MESSAGE LOGIC ---
 
 sendmessage.addEventListener('submit', (e) => {
     e.preventDefault(); 
     const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) return alert("Login to chat!");
+    if (!user) return alert("Please log in!");
     if (!messageInput.value.trim() || !currentRoom) return;
 
-    const data = {
+    socket.emit('newMessage', {
         roomName: currentRoom,
-        message: messageInput.value,
-        sender: user.name
-    };
-
-    socket.emit('newMessage', data);
+        message: messageInput.value
+    });
     messageInput.value = '';
 });
 
+// --- FUNCTIONS ---
 
-//---Functions---//
 function displaySingleMessage(data) {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     const isMe = data.sender === user?.name;
@@ -117,149 +102,80 @@ function displaySingleMessage(data) {
         </div>
     `;
     messagesContainer.appendChild(msgDiv);
-    messagesContainer.scrolltop = messagesContainer.scrollHeight;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function addChatRoomToDisplay(room) {
+function updateRoomSidebar(room) {
+    // Prevent duplicates in the UI
+    if (document.querySelector(`[data-id="${room.id}"]`)) return;
+
     const btn = document.createElement('button');
     btn.textContent = room.name;
     btn.classList.add('buttons');
-    btn.setAttribute('data-id', room.id); // Add this line!
+    btn.setAttribute('data-id', room.id); 
     btn.onclick = () => openChatRoom(room);
     displayBox.appendChild(btn);
 }
 
 function openChatRoom(room) {
     currentRoom = room.name;
-    currentRoomId = room.id; // Store the ID so we know which one to delete
+    currentRoomId = room.id;
     
     document.querySelector('.chatroom .header .logo').textContent = room.name;
-    document.querySelector('.chatroom').style.display = 'flex';
-    messagesContainer.innerHTML = '';
+    chatroomUI.style.display = 'flex';
+    messagesContainer.innerHTML = ''; // Clear for history
     socket.emit('joinRoom', room.name);
 
     const user = JSON.parse(localStorage.getItem('currentUser'));
-    const deleteBtn = document.getElementById('delroom');
-
-    if (user && room.owner === user.email) {
-        deleteBtn.style.display = 'block';
-    }else{
-        deleteBtn.style.display = 'none';
-    }
+    // Show delete button only if you are the owner (MongoDB email check)
+    chatroomSettingsBtn.style.display = (user && room.owner === user.email) ? 'block' : 'none';
 }
 
-function addRoomToSidebar(room) {
-    const displayBox = document.getElementById('display-box');
-    
-    // Check if button already exists to prevent duplicates on UI
-    if (document.getElementById(`room-btn-${room.name}`)) return;
+// --- SOCKET LISTENERS ---
 
-    const roomDiv = document.createElement('div');
-    roomDiv.classList.add('chatrum');
-    roomDiv.id = `room-btn-${room.name}`;
-    
-    const roomBtn = document.createElement('button');
-    roomBtn.textContent = room.name;
-    
-    roomBtn.addEventListener('click', () => {
-        openChatRoom(room);
-    });
+socket.on('initRooms', (rooms) => {
+    displayBox.innerHTML = ''; 
+    rooms.forEach(updateRoomSidebar);
+});
 
-    roomDiv.appendChild(roomBtn);
-    displayBox.appendChild(roomDiv);
-
-    location.reload(); // Refresh the page to update the sidebar with the new room
-}
-
-//--THE SOCKETS--//
-
-// Add this listener somewhere in the file to handle the server's response:
 socket.on('room-created-success', (newRoom) => {
-    addRoomToSidebar(newRoom);
+    updateRoomSidebar(newRoom);
     openChatRoom(newRoom);
-    document.getElementById('create-chatroom').classList.add('hidden');
+    createChatModal.classList.add('hidden');
     createChatForm.reset();
 });
 
 socket.on('chatHistory', (history) => {
     messagesContainer.innerHTML = '';
-    history.forEach(data => {
-        displaySingleMessage(data);
-    }); 
+    history.forEach(displaySingleMessage);
 });
-
-
-// When server sends existing rooms or a new one is created
-socket.on('initRooms', (rooms) => {
-    displayBox.innerHTML = ''; 
-    rooms.forEach(addChatRoomToDisplay);
-});
-
-socket.on('roomCreated', (room) => {
-    addChatRoomToDisplay(room);
-});
-
-
 
 socket.on('receiveMessage', (data) => {
-    console.log("Message received:", data); // Debugging line
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    const isMe = data.sender === user?.name;
-    
-    const msgDiv = document.createElement('div');
-    // Ensure these classes exist in your CSS!
-    msgDiv.classList.add('message', isMe ? 'my-message' : 'other-message');
-    
-    msgDiv.innerHTML = `
-        <div>
-            <div class="you" style="font-weight:bold">${isMe ? 'You' : data.sender}</div>
-            <div class="text">${data.message}</div>
-        </div>
-    `;
-    
-    messagesContainer.appendChild(msgDiv);
-    
-    // Auto-scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    displaySingleMessage(data);
 });
 
-
-// Add this listener to handle the verification result:
 socket.on('room-access-result', (response) => {
     if (response.success) {
-        addRoomToSidebar(response.room);
+        updateRoomSidebar(response.room);
         openChatRoom(response.room);
-        document.getElementById('join-chatroom').classList.add('hidden');
+        joinChatModal.classList.add('hidden');
         joinChatForm.reset();
     } else {
         alert(response.message);
     }
 });
 
-
-
-// Listen for the server telling us a room was deleted
 socket.on('roomDeleted', (roomId) => {
-    // 1. Hide the chatroom if that's the one we are currently looking at
     if (currentRoomId === roomId) {
-        document.querySelector('.chatroom').style.display = 'none';
+        chatroomUI.style.display = 'none';
         currentRoomId = null;
         currentRoom = null;
     }
-
-    // 2. Remove the button from the sidebar
-    // We look for all buttons in the display box and remove the one that matches
-    const roomButtons = displayBox.querySelectorAll('.buttons');
-    roomButtons.forEach(btn => {
-        // We check if the button text matches or we can add a data-id to the button when creating it
-        if (btn.getAttribute('data-id') === roomId) {
-            btn.remove();
-        }
-    });
+    const btn = document.querySelector(`[data-id="${roomId}"]`);
+    if (btn) btn.remove();
 });
 
 socket.on('logoutConfirm', () => {
-    localStorage.removeItem('currentUser')
-    displayBox.innerHTML = ''; // Clear the sidebar
-    window.localStorage.reload(); // Refresh the page to reset the UI
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
 });
