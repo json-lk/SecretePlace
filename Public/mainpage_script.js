@@ -3,13 +3,13 @@ const socket = io(URL, {
     withCredentials: true,
     transports: ["websocket", "polling"]
 });
-
-// --- SELECTORS ---
+const toggleButton = document.getElementById('theme-toggle');
 const authModal = document.getElementById('auth');
 const accountButton = document.querySelector('.account-button');
 const accountDropdown = document.getElementById('account-dropdown');
 const editProfileModal = document.getElementById('edit-profile-modal');
-const toggleButton = document.getElementById('theme-toggle');
+const switchFormButtons = document.querySelectorAll('.switch-process');
+
 
 // --- THEME LOGIC ---
 let isDarkMode = false;
@@ -19,7 +19,6 @@ toggleButton.addEventListener('click', () => {
     toggleButton.innerHTML = isDarkMode ? '🌞' : '🌙';
 });
 
-// --- AUTH SUBMISSIONS ---
 document.getElementById('logins').addEventListener('submit', (e) => {
     e.preventDefault();
     const email = e.target.querySelector('input[type="email"]').value;
@@ -29,56 +28,125 @@ document.getElementById('logins').addEventListener('submit', (e) => {
 
 document.getElementById('signups').addEventListener('submit', (e) => {
     e.preventDefault();
+    
     const name = e.target.querySelector('input[type="text"]').value;
     const email = e.target.querySelector('input[type="email"]').value;
     const password = e.target.querySelectorAll('input[type="password"]')[0].value;
+
     socket.emit('signup', { name, email, password });
 });
 
-// --- NEW: CREATE ROOM LOGIC ---
-// Ensure you have a form with ID 'create-room-form'
-const createRoomForm = document.getElementById('create-room-form');
-if (createRoomForm) {
-    createRoomForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const roomName = document.getElementById('room-name-input').value;
-        const roomPass = document.getElementById('room-password-input').value;
-        
-        socket.emit('createRoom', { name: roomName, password: roomPass });
-    });
-}
+document.getElementById('delusr').addEventListener('click', (e) => {
+    e.preventDefault();
+    if (confirm("Delete account permanently?")) {
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        socket.emit('deleteAccount', user.email);
+    }
+});
 
-// --- ACCOUNT ACTIONS ---
+
 accountButton.addEventListener('click', (e) => {
     e.stopPropagation();
     const user = localStorage.getItem('currentUser');
-    if (!user) {
-        authModal.classList.remove('hidden');
-    } else {
-        accountDropdown.classList.toggle('hidden');
-    }
+    if (!user) authModal.classList.remove('hidden');
+    else accountDropdown.classList.toggle('hidden');
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => {
     socket.emit('logout');
 });
 
-document.getElementById('delusr').addEventListener('click', (e) => {
+document.getElementById('edit-profile-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const pass = prompt("Please enter your password to confirm deletion:");
-    if (pass) {
-        socket.emit('deleteAccount', { password: pass });
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    socket.emit('updateProfile', {
+        oldEmail: currentUser.email,
+        newName: document.getElementById('edit-name').value,
+        newEmail: document.getElementById('edit-email').value,
+        newPassword: document.getElementById('edit-password').value
+    });
+});
+
+switchFormButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = button.getAttribute('data-target'); // 'login' or 'signup'
+        document.querySelectorAll('.authin').forEach(form => form.classList.remove('active'));
+        document.getElementById(targetId).classList.add('active');
+    });
+});
+
+// Close buttons for ALL modals
+document.querySelectorAll('.close-but').forEach(btn => {
+    btn.addEventListener('click', () => {
+        authModal.classList.add('hidden');
+        editProfileModal.classList.add('hidden');
+        document.getElementById('create-chatroom').classList.add('hidden');
+        document.getElementById('join-chatroom').classList.add('hidden');
+    });
+});
+
+// Open Edit Profile Modal
+document.getElementById('edit-profile-btn').addEventListener('click', () => {
+    accountDropdown.classList.add('hidden');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        document.getElementById('edit-name').value = currentUser.name;
+        document.getElementById('edit-email').value = currentUser.email;
+        editProfileModal.classList.remove('hidden');
     }
 });
 
-// --- SOCKET LISTENERS (The MongoDB Sync) ---
+// Close dropdown if clicking outside
+document.addEventListener('click', (e) => {
+    if (!accountDropdown.classList.contains('hidden') && !e.target.closest('.account-menu-container')) {
+        accountDropdown.classList.add('hidden');
+    }
+});
 
-// Fix: typo in 'curerentUser' fixed to 'currentUser'
+// --- UI HELPERS ---
+function updateAccountButton() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
+        accountButton.style.backgroundColor = '#4f46e5';
+    } else {
+        accountButton.textContent = '👤';
+        accountButton.style.backgroundColor = '#e2e8f0';
+    }
+}
+
+// --- AUTH ACTIONS ---
 socket.on('sessionRestore', (data) => {
     if (data.user) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        localStorage.setItem('curerentUser', JSON.stringify(data.user));
         authModal.classList.add('hidden');
         updateAccountButton();
+    }
+});
+
+// 1. Move the listener OUTSIDE the submit event to prevent duplicate alerts
+socket.on('signupResponse', (response) => {
+    if (response.success) {
+        // 2. Save the user data so the messaging functions can access it
+        const userData = {
+            name: response.user.name,
+            email: response.user.email
+        };
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        document.getElementById('signups').classList.remove('active');
+        
+        // If you have a main wrapper for the login/signup UI, hide it:
+        const authModal = document.getElementById('auth-modal'); // Change to your actual ID
+        if (authModal) authModal.classList.add('hidden');
+
+        alert(`Welcome, ${response.user.name}! You are now logged in.`);
+        
+         socket.emit('getRooms'); 
+        
+    } else {
+        alert(response.message);
     }
 });
 
@@ -87,7 +155,6 @@ socket.on('loginResponse', (res) => {
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         authModal.classList.add('hidden');
         updateAccountButton();
-        alert("Logged in successfully!");
     } else {
         alert(res.message);
     }
@@ -98,39 +165,26 @@ socket.on('signupResponse', (res) => {
         localStorage.setItem('currentUser', JSON.stringify(res.user));
         authModal.classList.add('hidden');
         updateAccountButton();
-        alert(`Welcome, ${res.user.name}!`);
     } else {
         alert(res.message);
     }
 });
 
-socket.on('room-created-success', (newRoom) => {
-    alert(`Room "${newRoom.name}" created!`);
-    document.getElementById('create-chatroom').classList.add('hidden');
-    // The server handles sending the updated list via initRooms usually
+socket.on('updateProfileResponse', (res) => {
+    if (res.success) {
+        localStorage.setItem('currentUser', JSON.stringify(res.user));
+        alert("Profile Updated!");
+        editProfileModal.classList.add('hidden');
+        updateAccountButton();
+    }
 });
 
-socket.on('errorMsg', (msg) => {
-    alert("Error: " + msg);
+socket.on('deleteResponse', () => {
+    localStorage.removeItem('currentUser');
+    location.reload();
 });
 
 socket.on('logoutConfirm', () => {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'index.html';
-});
-
-// --- UI HELPERS ---
-function updateAccountButton() {
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-        const currentUser = JSON.parse(userJson);
-        accountButton.textContent = currentUser.name.charAt(0).toUpperCase();
-        accountButton.style.backgroundColor = '#4f46e5';
-    } else {
-        accountButton.textContent = '👤';
-        accountButton.style.backgroundColor = '#e2e8f0';
-    }
-}
-
-// Initialize UI
-updateAccountButton();
+    localStorage.removeItem('currentUser')
+    window.location.href ='index.html';
+})
