@@ -42,8 +42,11 @@ closeCreateBtn.addEventListener('click', () => createChatModal.classList.add('hi
 // Create Room Action
 createChatForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    const name = document.getElementById('chat-name').value.trim();
+    if (!name) return alert("Room name is required!");
+    
     const roomData = {
-        name: document.getElementById('chat-name').value,
+        name: name,
         password: document.getElementById('chat-password').value,
         id: document.getElementById('chat-id').value || Math.random().toString(36).substring(7)
     };
@@ -77,13 +80,14 @@ chatroomSettingsBtn.addEventListener('click', () => {
 
 sendmessage.addEventListener('submit', (e) => {
     e.preventDefault(); 
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) return alert("Please log in!");
-    if (!messageInput.value.trim() || !currentRoom) return;
+    const msg = messageInput.value.trim();
 
-    socket.emit('newMessage', {
+    if (!msg) return;
+    if (!currentRoom) return alert("Join a room to send messages!");
+
+    socket.emit('newMessage',{
         roomName: currentRoom,
-        message: messageInput.value
+        message: msg
     });
     messageInput.value = '';
 });

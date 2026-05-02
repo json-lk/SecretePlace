@@ -60,29 +60,31 @@ const io = socketIo(server, {
     }
 });
 
-// FIX: Initializing MongoStore correctly for v4+
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Don't save empty sessions
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
-        collectionName: 'sessions' // This stores login sessions in your Non_e DB
     }),
     cookie: { 
-        secure: NODE_ENV === 'production', 
+        secure: process.env.NODE_ENV === 'production', 
         httpOnly: true,
-        sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 14 * 24 * 60 * 60 * 1000 
     }
 });
 
-app.set('trust proxy', 1); 
 app.use(sessionMiddleware);
-app.use(express.static(path.join(__dirname, 'Public')));
 
 // Share session with Socket.io
-io.use(sharedsession(sessionMiddleware, { autoSave: true }));
+io.use(sharedsession(sessionMiddleware, { 
+    autoSave: true 
+}));
+
+app.set('trust proxy', 1); 
+
+app.use(express.static(path.join(__dirname, 'Public')));
 
 // 4. Helper Logic
 const getVisibleRooms = async (user) => {
@@ -99,6 +101,7 @@ const getVisibleRooms = async (user) => {
 // 5. Socket Logic
 io.on('connection', (socket) => {
     const session = socket.handshake.session;
+    console.log("Socket connected. Session User:", session?.user?.email || "guest")
 
     if (session && session.user) {
         socket.emit('sessionRestore', { user: session.user });
