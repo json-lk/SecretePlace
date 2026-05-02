@@ -155,24 +155,45 @@ io.on('connection', (socket) => {
     });
 
     socket.on('createRoom', async (roomData) => {
-        if (!session?.user) return socket.emit('errorMsg', 'Login required.');
-        try {
-            const exists = await Room.findOne({ $or: [{ name: roomData.name }, { id: roomData.id }] });
-            if (exists) return socket.emit('errorMsg', 'Room name or ID taken.');
+        // Force the socket to fetch the latest session from MongoDB
+        socket.handshake.session.reload(async (err) => {
+            if (err) {
+                console.error("Session reload error:", err);
+                return socket.emit('errorMsg', 'Session error. Please try again.');
+            }
 
+            // Now check if the user exists in the freshly reloaded session
+            if (!socket.handshake.session.user) {
+                console.log("CreateRoom blocked: No user in reloaded session.");
+                return socket.emit('errorMsg', 'Login required.');
+            }
+
+            try {
+                // Check if room already exists
+                const exists = await Room.findOne({ $or: [{ name: roomData.name }, { id: roomData.id }] });
+                if (exists) return socket.emit('errorMsg', 'Room name or ID already exists!');
+
+            
+            // Save to DB using the capitalized Model "Room"
             const newRoom = await Room.create({ 
                 name: roomData.name,
                 password: roomData.password || "",
                 id: roomData.id || uuidv4(), 
-                owner: session.user.email 
+                owner: socket.handshake.session.user.email 
             });
 
             socket.emit('room-created-success', newRoom);
-            await refreshUserRooms(session.user);
-        } catch (e) {
-            socket.emit('errorMsg', 'Database error.');
-        }
-    });
+        
+            // Refresh the sidebar
+            const rooms = await getVisibleRooms(socket.handshake.session.user);
+    
+            socket.emit('initRooms', rooms);
+                } catch (e) {
+                    console.error("DB Save Error:", e);
+                    socket.emit('errorMsg', 'Database error: Could not save room.');
+                }
+            });
+        });
 
     socket.on('joinRoom', async (roomName) => {
         // Leave previous rooms
@@ -183,17 +204,22 @@ io.on('connection', (socket) => {
     });;
 
     socket.on('newMessage', async (data) => {
-        if (!session?.user || !data.roomName) return;
-        try {
-            const newMessage = await Message.create({
-                roomName: data.roomName,
-                message: data.message,
-                sender: session.user.name,
-            });
-            io.to(data.roomName).emit('receiveMessage', newMessage);
-        } catch (e) {
-            socket.emit('errorMsg', 'Failed to save message.');
-        }
+        socket.handshake.session.reload(async (err) => {
+            if (err || !socket.handshake.session.user) {
+                return socket.emit('errorMsg', 'Message failed: Session expired.');
+            }
+
+            try {
+                const newMessage = await Message.create({
+                    roomName: data.roomName,
+                    message: data.message,
+                    sender: socket.handshake.session.user.name,
+                });
+                io.to(data.roomName).emit('receiveMessage', newMessage);
+            } catch (e) {
+                socket.emit('errorMsg', 'Failed to save message.');
+            }
+        });
     });
 
     socket.on('logout', () => {
