@@ -60,17 +60,20 @@ const io = socketIo(server, {
     }
 });
 
+app.set('trust proxy', 1); 
+
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
     saveUninitialized: false, // Don't save empty sessions
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
+        ttl: 14 * 24 * 60 * 60 // 14 days in seconds
     }),
     cookie: { 
         secure: process.env.NODE_ENV === 'production', 
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: 'none',
         maxAge: 14 * 24 * 60 * 60 * 1000 
     }
 });
@@ -81,8 +84,6 @@ app.use(sessionMiddleware);
 io.use(sharedsession(sessionMiddleware, { 
     autoSave: true 
 }));
-
-app.set('trust proxy', 1); 
 
 app.use(express.static(path.join(__dirname, 'Public')));
 
@@ -103,9 +104,14 @@ io.on('connection', (socket) => {
     const session = socket.handshake.session;
     console.log("Socket connected. Session User:", session?.user?.email || "guest")
 
+    const refreshUserRooms = async (user) => {
+        const rooms = await getVisibleRooms(user);
+        socket.emit('initRooms', rooms);
+    };
+
     if (session && session.user) {
         socket.emit('sessionRestore', { user: session.user });
-        getVisibleRooms(session.user).then(rooms => socket.emit('initRooms', rooms));
+        refreshUserRooms(session.user);
     }
 
     socket.on('login', async (data) => {
@@ -113,10 +119,9 @@ io.on('connection', (socket) => {
             const user = await User.findOne({ email: data.email });
             if (user && await bcrypt.compare(data.password, user.password)) {
                 session.user = { name: user.name, email: user.email };
-                session.save(async () => {
+                session.save(() => {
                     socket.emit('loginResponse', { success: true, user: session.user });
-                    const rooms = await getVisibleRooms(session.user);
-                    socket.emit('initRooms', rooms);
+                    refreshUserRooms(session.user);
                 });
             } else {
                 socket.emit('loginResponse', { success: false, message: 'Invalid credentials.' });
@@ -153,7 +158,7 @@ io.on('connection', (socket) => {
         if (!session?.user) return socket.emit('errorMsg', 'Login required.');
         try {
             const exists = await Room.findOne({ $or: [{ name: roomData.name }, { id: roomData.id }] });
-            if (exists) return socket.emit('errorMsg', 'Room name or ID already exists!');
+            if (exists) return socket.emit('errorMsg', 'Room name or ID taken.');
 
             const newRoom = await Room.create({ 
                 name: roomData.name,
@@ -163,29 +168,32 @@ io.on('connection', (socket) => {
             });
 
             socket.emit('room-created-success', newRoom);
-            // Refresh rooms for the creator
-            const rooms = await getVisibleRooms(session.user);
-            socket.emit('initRooms', rooms);
+            await refreshUserRooms(session.user);
         } catch (e) {
-            socket.emit('errorMsg', 'Error creating room.');
+            socket.emit('errorMsg', 'Database error.');
         }
     });
 
     socket.on('joinRoom', async (roomName) => {
+        // Leave previous rooms
         socket.rooms.forEach(room => { if(room !== socket.id) socket.leave(room); });
         socket.join(roomName);
-        const history = await Message.find({ roomName }).sort({ timestamp: 1 }).limit(100);
+        const history = await Message.find({ roomName }).sort({ timestamp: 1 }).limit(50);
         socket.emit('chatHistory', history); 
-    });
+    });;
 
     socket.on('newMessage', async (data) => {
         if (!session?.user || !data.roomName) return;
-        const newMessage = await Message.create({
-            roomName: data.roomName,
-            message: data.message,
-            sender: session.user.name,
-        });
-        io.to(data.roomName).emit('receiveMessage', newMessage);
+        try {
+            const newMessage = await Message.create({
+                roomName: data.roomName,
+                message: data.message,
+                sender: session.user.name,
+            });
+            io.to(data.roomName).emit('receiveMessage', newMessage);
+        } catch (e) {
+            socket.emit('errorMsg', 'Failed to save message.');
+        }
     });
 
     socket.on('logout', () => {
@@ -198,9 +206,10 @@ io.on('connection', (socket) => {
     socket.on('verify-room', async (data) => {
         if (!session?.user) return socket.emit('room-access-result', { success: false, message: 'Login required.' });
         const room = await Room.findOne({ name: data.name });
-        if (!room) return socket.emit('room-access-result', { success: false, message: 'Room not found.' });
+        if (!room) return socket.emit('room-access-result', { success: false, message: 'Not found.' });
+        
         if (room.password && room.password !== data.password) {
-            return socket.emit('room-access-result', { success: false, message: 'Incorrect password.' });
+            return socket.emit('room-access-result', { success: false, message: 'Wrong password.' });
         }
         socket.emit('room-access-result', { success: true, room });
     });
