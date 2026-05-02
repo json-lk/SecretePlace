@@ -3,6 +3,18 @@ const socket = io("https://non-e.onrender.com", {
     transports: ["websocket", "polling"]
 });
 
+async function establishSession() {
+    try {
+        // Replace with your actual Render URL
+        await fetch("https://non-e.onrender.com/", { mode: 'cors' });
+        console.log("Session link established with server");
+    } catch (e) {
+        console.error("Could not reach server");
+    }
+}
+
+establishSession();
+
 // --- SELECTORS ---
 const createChatBtn = document.getElementById('create-chat');
 const createChatModal = document.getElementById('create-chatroom');
