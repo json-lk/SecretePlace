@@ -1,7 +1,5 @@
-// 1. Initialize Socket correctly for Cross-Origin (Vercel -> Render)
-const URL = "https://non-e.onrender.com"; 
-const socket = io(URL, {
-    withCredentials: true,
+const socket = io("https://non-e.onrender.com", {
+    withCredentials: true, // THIS IS CRITICAL
     transports: ["websocket", "polling"]
 });
 
