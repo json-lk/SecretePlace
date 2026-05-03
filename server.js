@@ -120,23 +120,27 @@ io.on('connection', (socket) => {
         refreshUserRooms(session.user);
     }
 
-    // Auth & Room Listeners
     socket.on('login', async (data) => {
-        try {
-            const user = await User.findOne({ email: data.email });
-            if (user && await bcrypt.compare(data.password, user.password)) {
-                session.user = { name: user.name, email: user.email };
-                session.save(() => {
-                    socket.emit('loginResponse', { success: true, user: session.user });
-                    refreshUserRooms(session.user);
-                });
-            } else {
-                socket.emit('loginResponse', { success: false, message: 'Invalid credentials.' });
-            }
-        } catch (err) {
-            socket.emit('loginResponse', { success: false, message: 'Server error.' });
+    try {
+        const user = await User.findOne({ email: data.email });
+        if (user && await bcrypt.compare(data.password, user.password)) {
+            // Set the user
+            socket.handshake.session.user = { name: user.name, email: user.email };
+            
+            // Explicitly save to MongoStore
+            socket.handshake.session.save((err) => {
+                if (err) return socket.emit('loginResponse', { success: false, message: 'Session error' });
+                
+                socket.emit('loginResponse', { success: true, user: socket.handshake.session.user });
+                refreshUserRooms(socket.handshake.session.user);
+            });
+        } else {
+            socket.emit('loginResponse', { success: false, message: 'Invalid credentials.' });
         }
-    });
+    } catch (err) {
+        socket.emit('loginResponse', { success: false, message: 'Server error.' });
+    }
+});
 
     socket.on('signup', async (data) => {
         try {
