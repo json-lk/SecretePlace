@@ -18,12 +18,10 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // 1. Database Connection
 const connectDB = async () => {
     try {
-        // Mongoose 6+ automatically uses the modern URL parser
         await mongoose.connect(process.env.MONGO_URI);
         console.log("✅ Connected to MongoDB Atlas: Non_e Database");
     } catch (err) {
-        console.error("❌ CRITICAL: Database connection failed!");
-        console.error(err.message);
+        console.error("❌ CRITICAL: Database connection failed!", err.message);
     }
 };
 
@@ -99,11 +97,18 @@ const getVisibleRooms = async (user) => {
 
 // 5. Socket Logic
 io.on('connection', (socket) => {
-    // Standardizing URL access using WHATWG URL API if needed for handshake details
-    const fullUrl = new URL(socket.handshake.url, `http://${socket.handshake.headers.host || 'localhost'}`);
-    
+    /** 
+     * MODERN URL API IMPLEMENTATION
+     * We use the global URL class. Note: new URL() requires an absolute path, 
+     * so we provide the host from headers as the base.
+     */
+    const protocol = socket.handshake.secure ? 'https' : 'http';
+    const host = socket.handshake.headers.host || 'localhost';
+    const connectionUrl = new URL(socket.handshake.url, `${protocol}://${host}`);
+
     const session = socket.handshake.session;
-    console.log(`Socket connected via ${fullUrl.pathname}. Session User:`, session?.user?.email || "guest");
+    console.log(`🚀 Socket connected. Path: ${connectionUrl.pathname}`);
+    console.log(`User: ${session?.user?.email || "guest"}`);
 
     const refreshUserRooms = async (user) => {
         const rooms = await getVisibleRooms(user);
@@ -115,6 +120,7 @@ io.on('connection', (socket) => {
         refreshUserRooms(session.user);
     }
 
+    // Auth & Room Listeners
     socket.on('login', async (data) => {
         try {
             const user = await User.findOne({ email: data.email });
@@ -135,7 +141,7 @@ io.on('connection', (socket) => {
     socket.on('signup', async (data) => {
         try {
             const exists = await User.findOne({ email: data.email });
-            if (exists) return socket.emit('signupResponse', { success: false, message: 'Email already exists!' });
+            if (exists) return socket.emit('signupResponse', { success: false, message: 'Email exists.' });
 
             const hashedPassword = await bcrypt.hash(data.password, 10);
             const newUser = await User.create({
@@ -158,12 +164,11 @@ io.on('connection', (socket) => {
     socket.on('createRoom', async (roomData) => {
         socket.handshake.session.reload(async (err) => {
             if (err || !socket.handshake.session.user) {
-                return socket.emit('errorMsg', 'Login required or session expired.');
+                return socket.emit('errorMsg', 'Session expired.');
             }
-
             try {
                 const exists = await Room.findOne({ $or: [{ name: roomData.name }, { id: roomData.id }] });
-                if (exists) return socket.emit('errorMsg', 'Room name or ID already exists!');
+                if (exists) return socket.emit('errorMsg', 'Room already exists!');
 
                 const newRoom = await Room.create({ 
                     name: roomData.name,
@@ -176,7 +181,7 @@ io.on('connection', (socket) => {
                 const rooms = await getVisibleRooms(socket.handshake.session.user);
                 socket.emit('initRooms', rooms);
             } catch (e) {
-                socket.emit('errorMsg', 'Database error: Could not save room.');
+                socket.emit('errorMsg', 'Database error.');
             }
         });
     });
@@ -190,10 +195,7 @@ io.on('connection', (socket) => {
 
     socket.on('newMessage', async (data) => {
         socket.handshake.session.reload(async (err) => {
-            if (err || !socket.handshake.session.user) {
-                return socket.emit('errorMsg', 'Message failed: Session expired.');
-            }
-
+            if (err || !socket.handshake.session.user) return socket.emit('errorMsg', 'Expired.');
             try {
                 const newMessage = await Message.create({
                     roomName: data.roomName,
@@ -202,7 +204,7 @@ io.on('connection', (socket) => {
                 });
                 io.to(data.roomName).emit('receiveMessage', newMessage);
             } catch (e) {
-                socket.emit('errorMsg', 'Failed to save message.');
+                socket.emit('errorMsg', 'Save failed.');
             }
         });
     });
@@ -228,8 +230,7 @@ io.on('connection', (socket) => {
     socket.on('deleteRoom', async (data) => {
         if (!session?.user) return socket.emit('errorMsg', 'Login required.');
         const room = await Room.findOne({ id: data.roomId });
-        if (!room) return socket.emit('errorMsg', 'Room not found.');
-        if (room.owner !== session.user.email) return socket.emit('errorMsg', 'Unauthorized.');
+        if (!room || room.owner !== session.user.email) return socket.emit('errorMsg', 'Unauthorized.');
 
         await Room.deleteOne({ id: data.roomId });
         await Message.deleteMany({ roomName: room.name });
