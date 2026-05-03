@@ -5,9 +5,15 @@ const socket = io("https://non-e.onrender.com", {
 
 async function establishSession() {
     try {
-        // Replace with your actual Render URL
-        await fetch("https://non-e.onrender.com/", { mode: 'cors' });
-        console.log("Session link established with server");
+        // This "wakes up" the Render session and gets the cookie
+        await fetch("https://non-e.onrender.com/", { 
+            mode: 'cors',
+            credentials: 'include' // CRITICAL: Tell fetch to receive cookies
+        });
+        console.log("Session link established");
+        
+        // Only after fetch is successful, tell the server to refresh rooms
+        socket.emit('getRooms'); 
     } catch (e) {
         console.error("Could not reach server");
     }
