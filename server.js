@@ -59,19 +59,22 @@ const io = socketIo(server, {
 
 app.set('trust proxy', 1); 
 
+app.set('trust proxy', 1); // Required for Render
+
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
-    resave: false,
+    resave: true,               // Force session to be saved back to the store
     saveUninitialized: false, 
+    proxy: true,                // Trust the Render proxy for HTTPS
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
         ttl: 14 * 24 * 60 * 60 
     }),
     cookie: { 
-    secure: true, // MUST be true for 'none'
-    httpOnly: true,
-    sameSite: 'none', // MUST be 'none' for cross-domain (Vercel to Render)
-    maxAge: 14 * 24 * 60 * 60 * 1000 
+        secure: true,           // MUST be true for SameSite: 'none'
+        httpOnly: true,
+        sameSite: 'none',       // REQUIRED for cross-domain (Vercel to Render)
+        maxAge: 14 * 24 * 60 * 60 * 1000 
     }
 });
 
