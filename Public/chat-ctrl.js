@@ -1,6 +1,7 @@
 const socket = io("https://non-e.onrender.com", {
     withCredentials: true, // THIS IS CRITICAL
-    transports: ["websocket", "polling"]
+    transports: ["polling","websocket"]
+    rememberUpgrade: true
 });
 
 async function establishSession() {
