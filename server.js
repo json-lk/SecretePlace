@@ -15,22 +15,21 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// 1. Database Connection - Targeting "Non_e"
 // 1. Database Connection
 const connectDB = async () => {
     try {
+        // Mongoose 6+ automatically uses the modern URL parser
         await mongoose.connect(process.env.MONGO_URI);
         console.log("✅ Connected to MongoDB Atlas: Non_e Database");
     } catch (err) {
         console.error("❌ CRITICAL: Database connection failed!");
         console.error(err.message);
-        // Instead of crashing the whole server, we log it.
-        // Or, if you want it to stop, use process.exit(1);
     }
 };
 
 connectDB();
-// 2. Database Models (These will automatically create collections in Non_e)
+
+// 2. Database Models
 const User = mongoose.model('User', new mongoose.Schema({
     name: String,
     email: { type: String, unique: true },
@@ -65,13 +64,13 @@ app.set('trust proxy', 1);
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret-chat-key',
     resave: false,
-    saveUninitialized: false, // Don't save empty sessions
+    saveUninitialized: false, 
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
-        ttl: 14 * 24 * 60 * 60 // 14 days in seconds
+        ttl: 14 * 24 * 60 * 60 
     }),
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', 
+        secure: NODE_ENV === 'production', 
         httpOnly: true,
         sameSite: 'none',
         maxAge: 14 * 24 * 60 * 60 * 1000 
@@ -80,7 +79,6 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
-// Share session with Socket.io
 io.use(sharedsession(sessionMiddleware, { 
     autoSave: true 
 }));
@@ -101,15 +99,18 @@ const getVisibleRooms = async (user) => {
 
 // 5. Socket Logic
 io.on('connection', (socket) => {
+    // Standardizing URL access using WHATWG URL API if needed for handshake details
+    const fullUrl = new URL(socket.handshake.url, `http://${socket.handshake.headers.host || 'localhost'}`);
+    
     const session = socket.handshake.session;
-    console.log("Socket connected. Session User:", session?.user?.email || "guest")
+    console.log(`Socket connected via ${fullUrl.pathname}. Session User:`, session?.user?.email || "guest");
 
     const refreshUserRooms = async (user) => {
         const rooms = await getVisibleRooms(user);
         socket.emit('initRooms', rooms);
     };
 
-    if (session && session.user) {
+    if (session?.user) {
         socket.emit('sessionRestore', { user: session.user });
         refreshUserRooms(session.user);
     }
@@ -155,53 +156,37 @@ io.on('connection', (socket) => {
     });
 
     socket.on('createRoom', async (roomData) => {
-        // Force the socket to fetch the latest session from MongoDB
         socket.handshake.session.reload(async (err) => {
-            if (err) {
-                console.error("Session reload error:", err);
-                return socket.emit('errorMsg', 'Session error. Please try again.');
-            }
-
-            // Now check if the user exists in the freshly reloaded session
-            if (!socket.handshake.session.user) {
-                console.log("CreateRoom blocked: No user in reloaded session.");
-                return socket.emit('errorMsg', 'Login required.');
+            if (err || !socket.handshake.session.user) {
+                return socket.emit('errorMsg', 'Login required or session expired.');
             }
 
             try {
-                // Check if room already exists
                 const exists = await Room.findOne({ $or: [{ name: roomData.name }, { id: roomData.id }] });
                 if (exists) return socket.emit('errorMsg', 'Room name or ID already exists!');
 
-            
-            // Save to DB using the capitalized Model "Room"
-            const newRoom = await Room.create({ 
-                name: roomData.name,
-                password: roomData.password || "",
-                id: roomData.id || uuidv4(), 
-                owner: socket.handshake.session.user.email 
-            });
+                const newRoom = await Room.create({ 
+                    name: roomData.name,
+                    password: roomData.password || "",
+                    id: roomData.id || uuidv4(), 
+                    owner: socket.handshake.session.user.email 
+                });
 
-            socket.emit('room-created-success', newRoom);
-        
-            // Refresh the sidebar
-            const rooms = await getVisibleRooms(socket.handshake.session.user);
-    
-            socket.emit('initRooms', rooms);
-                } catch (e) {
-                    console.error("DB Save Error:", e);
-                    socket.emit('errorMsg', 'Database error: Could not save room.');
-                }
-            });
+                socket.emit('room-created-success', newRoom);
+                const rooms = await getVisibleRooms(socket.handshake.session.user);
+                socket.emit('initRooms', rooms);
+            } catch (e) {
+                socket.emit('errorMsg', 'Database error: Could not save room.');
+            }
         });
+    });
 
     socket.on('joinRoom', async (roomName) => {
-        // Leave previous rooms
         socket.rooms.forEach(room => { if(room !== socket.id) socket.leave(room); });
         socket.join(roomName);
         const history = await Message.find({ roomName }).sort({ timestamp: 1 }).limit(50);
         socket.emit('chatHistory', history); 
-    });;
+    });
 
     socket.on('newMessage', async (data) => {
         socket.handshake.session.reload(async (err) => {
