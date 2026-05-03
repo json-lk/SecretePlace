@@ -68,10 +68,10 @@ const sessionMiddleware = session({
         ttl: 14 * 24 * 60 * 60 
     }),
     cookie: { 
-        secure: NODE_ENV === 'production', 
-        httpOnly: true,
-        sameSite: 'none',
-        maxAge: 14 * 24 * 60 * 60 * 1000 
+    secure: true, // MUST be true for 'none'
+    httpOnly: true,
+    sameSite: 'none', // MUST be 'none' for cross-domain (Vercel to Render)
+    maxAge: 14 * 24 * 60 * 60 * 1000 
     }
 });
 
@@ -97,11 +97,7 @@ const getVisibleRooms = async (user) => {
 
 // 5. Socket Logic
 io.on('connection', (socket) => {
-    /** 
-     * MODERN URL API IMPLEMENTATION
-     * We use the global URL class. Note: new URL() requires an absolute path, 
-     * so we provide the host from headers as the base.
-     */
+    console.log("Cookie Header:", socket.handshake.headers.cookie);
     const protocol = socket.handshake.secure ? 'https' : 'http';
     const host = socket.handshake.headers.host || 'localhost';
     const connectionUrl = new URL(socket.handshake.url, `${protocol}://${host}`);
