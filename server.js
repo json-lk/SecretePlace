@@ -119,28 +119,27 @@ io.on('connection', (socket) => {
         refreshUserRooms(session.user);
     }
 
-    socket.on('login', async (data) => {
-    try {
-        const user = await User.findOne({ email: data.email });
-        if (user && await bcrypt.compare(data.password, user.password)) {
-            // Set the user
-            socket.handshake.session.user = { name: user.name, email: user.email };
+    socket.on('login', async (data) => {    
+        try {
+            const user = await User.findOne({ email: data.email });
+            if (user && await bcrypt.compare(data.password, user.password)) {
+                // 1. Attach user to session
+                socket.handshake.session.user = { name: user.name, email: user.email };
             
-            // Explicitly save to MongoStore
-            socket.handshake.session.save((err) => {
-                if (err) return socket.emit('loginResponse', { success: false, message: 'Session error' });
+                // 2. FORCE SAVE before replying
+                socket.handshake.session.save((err) => {
+                    if (err) return socket.emit('loginResponse', { success: false, message: 'Session save failed' });
                 
-                socket.emit('loginResponse', { success: true, user: socket.handshake.session.user });
-                refreshUserRooms(socket.handshake.session.user);
-            });
-        } else {
-            socket.emit('loginResponse', { success: false, message: 'Invalid credentials.' });
+                    socket.emit('loginResponse', { success: true, user: socket.handshake.session.user });
+                    refreshUserRooms(socket.handshake.session.user);
+                });
+            }else {
+                socket.emit('loginResponse', { success: false, message: 'Invalid credentials.' });
+            }
+        } catch (err) {
+            socket.emit('loginResponse', { success: false, message: 'Server error.' });
         }
-    } catch (err) {
-        socket.emit('loginResponse', { success: false, message: 'Server error.' });
-    }
-});
-
+    });
     socket.on('signup', async (data) => {
         try {
             const exists = await User.findOne({ email: data.email });
